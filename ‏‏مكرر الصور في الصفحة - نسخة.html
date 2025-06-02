@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>مكرر الصور الذكي (معدل 11 - أقسام في مربعات)</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #4A90E2;
+            --secondary-color: #50E3C2;
+            --accent-color: #F5A623;
+            --neutral-dark: #4A4A4A;
+            --neutral-light: #F4F4F4;
+            --white: #FFFFFF;
+            --black: #000000;
+            --danger-color: #D0021B;
+            --success-color: #7ED321;
+            --section-bg: #fdfdff; /* خلفية خفيفة للأقسام */
+            --section-border: #e8eef3; /* لون حدود الأقسام */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Cairo', 'Tajawal', sans-serif;
+            direction: rtl;
+            overflow-x: hidden;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f5fb 0%, #e8eef7 100%); /* خلفية أفتح وأنعم */
+            color: var(--neutral-dark);
+            padding: 15px 10px;
+            font-weight: 400;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            border-radius: 12px;
+            background: var(--white);
+            box-shadow: 0 7px 22px rgba(0, 0, 0, 0.06);
+            padding: clamp(20px, 3vw, 30px) clamp(25px, 4vw, 40px);
+            border: 1px solid #d8e0e8;
+            min-height: calc(100vh - 30px);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: clamp(1.7rem, 4vw, 2.2rem);
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 25px; /* زيادة الهامش السفلي قليلاً */
+            margin-top: 5px;
+            position: relative;
+        }
+
+        h1::after {
+            content: "";
+            display: block;
+            width: 70px;
+            height: 2.5px;
+            margin: 8px auto 0;
+            background-color: var(--secondary-color);
+            border-radius: 3px;
+        }
+
+        h3 { /* عناوين الأقسام الداخلية */
+            font-size: clamp(1.1rem, 3vw, 1.3rem); /* تصغير طفيف */
+            margin: 0 0 12px 0; /* إزالة الهامش العلوي، تقليل السفلي */
+            color: var(--primary-color); /* لون مميز لعنوان القسم */
+            font-weight: 700;
+            text-align: right; /* محاذاة لليمين */
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--section-border);
+        }
+
+        label, .label-like {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--neutral-dark);
+            font-size: 0.9rem;
+        }
+
+        .inline-label { display: inline-block; margin-left: 5px; margin-right:0; vertical-align: middle; font-weight: 400;}
+
+        input[type="number"], input[type="file"], select {
+            width: 100%;
+            padding: 9px 11px; /* تقليل طفيف للحشو */
+            border: 1px solid #d1d9e1;
+            border-radius: 6px;
+            background: #fdfdfe;
+            color: var(--neutral-dark);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        input[type="number"]:focus, input[type="file"]:focus, select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2.5px rgba(74, 144, 226, 0.18);
+            background: var(--white);
+        }
+        input[type="file"] { cursor: pointer; }
+        input[type="file"]::file-selector-button {
+            padding: 7px 10px; /* تقليل طفيف */
+            margin-right: 10px;
+            margin-left: -10px;
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            border-radius: 0 6px 6px 0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        input[type="file"]::file-selector-button:hover {
+            background-color: #3a7bc8;
+        }
+
+        .file-input-container-outer { /* المربع لقسم رفع الملفات */
+            background-color: var(--section-bg);
+            border: 1px solid var(--section-border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .file-input-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            /* margin-bottom: 15px; Removed, handled by outer container */
+        }
+        .file-input-container label {
+            margin-bottom: 0;
+            flex-shrink: 0;
+        }
+        .file-input-wrapper {
+            flex-grow: 1;
+        }
+
+
+        input[type="checkbox"], input[type="radio"] {
+            transform: scale(1.1);
+            margin-left: 4px;
+            cursor: pointer;
+            accent-color: var(--primary-color);
+            vertical-align: middle;
+        }
+        .aspectRatioOptions { display: flex; flex-direction: row; gap: 10px; margin-top: 5px; margin-bottom: 6px; align-items: center; }
+        .aspectRatioOptions label { font-weight: 500; margin-bottom: 0; font-size: 0.8rem; color: var(--neutral-dark); }
+
+        .option-box { /* المربع لخيار الإطار */
+            background-color: var(--section-bg);
+            border: 1px solid var(--section-border);
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .option-box .option-label {
+            margin-top: 0; /* إزالة الهامش العلوي للملصق داخل المربع */
+        }
+
+
+        button, #downloadLink a, .action-button {
+            display: inline-block;
+            padding: 9px 18px; /* تقليل طفيف للحشو */
+            background: var(--primary-color);
+            color: var(--white);
+            font-size: 0.88rem; /* تصغير طفيف */
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+            text-decoration: none;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
+        }
+        button:hover, #downloadLink a:hover, .action-button:hover {
+            background-color: #3a7bc8;
+            box-shadow: 0 5px 12px rgba(74, 144, 226, 0.25);
+            transform: translateY(-1px);
+        }
+        button:active, #downloadLink a:active, .action-button:active {
+            transform: translateY(0px) scale(0.97);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        #submitPdfButton {
+            display: block;
+            width: auto;
+            max-width: 260px; /* تصغير طفيف */
+            margin: 20px auto 10px;
+            background: var(--success-color);
+            font-size: 0.95rem; /* تعديل حجم الخط */
+        }
+        #submitPdfButton:hover {
+            background: #6abf1c;
+            box-shadow: 0 5px 12px rgba(126, 211, 33, 0.3);
+        }
+
+        #clearAllButton {
+            background-color: var(--danger-color);
+            padding: 8px 16px; /* تعديل طفيف */
+            margin-top: 0;
+            margin-right: auto;
+        }
+        #clearAllButton:hover {
+            background-color: #b00216;
+            box-shadow: 0 5px 12px rgba(208, 2, 27, 0.25);
+        }
+
+        .settings-row-flex-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px; /* تقليل الفجوة */
+            margin-bottom: 18px;
+        }
+        .settings-column {
+            flex: 1;
+            min-width: 270px; /* تعديل طفيف */
+            display: flex;
+            flex-direction: column;
+            background-color: var(--section-bg); /* خلفية لعمود القسم */
+            border: 1px solid var(--section-border);
+            border-radius: 8px;
+            padding: 15px; /* حشو داخلي للعمود */
+        }
+        .settings-column > h3 { /* عنوان القسم داخل العمود */
+            margin-top: 0; /* إزالة الهامش العلوي لـ h3 داخل العمود */
+        }
+
+
+        #previewContainer {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); /* تصغير طفيف */
+            gap: 12px; /* تقليل الفجوة */
+            margin-top: 15px;
+            margin-bottom: 20px;
+            padding: 10px; /* حشو للحاوية */
+            background-color: var(--section-bg);
+            border: 1px solid var(--section-border);
+            border-radius: 8px;
+        }
+        .settings-row {
+            display: flex; flex-direction: column; gap: 8px;
+            background: var(--white);
+            padding: 10px; /* تقليل الحشو */
+            border: 1px solid #e6edf2;
+            border-radius: 8px; /* تصغير نصف القطر */
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03); /* ظل أخف */
+            position: relative;
+        }
+        .settings-row:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+            border-color: var(--primary-color);
+        }
+        .settings-row img {
+            max-width: 100%;
+            height: 100px; /* تصغير ارتفاع الصورة */
+            border: 1px solid #eef3f7;
+            border-radius: 6px;
+            background: #f9fafc;
+            object-fit: contain;
+            margin-bottom: 6px;
+            transition: transform 0.2s ease-out;
+        }
+        .settings-row:hover img {
+            transform: scale(1.02);
+        }
+        .row-inputs { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+        .row-inputs .image-source-title {
+            font-size: 0.78rem; /* تصغير طفيف */
+            margin-bottom: 5px; font-weight: 600;
+            text-align: center; color: var(--primary-color);
+            background-color: rgba(74, 144, 226, 0.07);
+            padding: 4px 6px; /* تقليل الحشو */
+            border-radius: 5px;
+            word-break: break-all;
+        }
+        .row-inputs label { font-size: 0.8rem; margin-bottom: 2px; font-weight: 500; color: var(--neutral-dark); }
+        .row-inputs input[type="number"] {
+            font-size: 0.78rem; padding: 6px 8px; /* تقليل الحشو */
+            background-color: var(--white);
+            border-color: #d8e0e8;
+        }
+        .row-inputs input[type="number"]:focus {
+            background-color: var(--white);
+            border-color: var(--primary-color);
+        }
+        .row-inputs .aspectRatioOptions label { font-size: 0.75rem; color: var(--neutral-dark); }
+        .row-inputs .action-button {
+            padding: 7px 10px; font-size: 0.82rem; width: 100%;
+            background: var(--danger-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .row-inputs .action-button:hover {
+            background: #b00216;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 7px rgba(208, 2, 27, 0.25);
+        }
+         .row-buttons-container { display: flex; gap: 8px; justify-content: space-between; margin-top: auto; }
+
+
+        /* إزالة الخلفية والحدود من هذه العناصر لأن العمود .settings-column سيوفرها */
+        #presetsContainer,
+        #globalImageSettingsContainer,
+        #pageSizeChooser,
+        #pageOrientationChooser,
+        #pageSimulationContainer,
+        #marginSettingsContainer {
+            background-color: transparent;
+            border: none;
+            padding: 0; /* إزالة الحشو الداخلي إذا كان العمود يوفر الحشو */
+            margin-bottom: 0; /* إزالة الهامش السفلي إذا كان العمود يوفر التباعد */
+        }
+
+        .settings-group-container-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); /* تصغير طفيف */
+            gap: 10px; /* تقليل الفجوة */
+        }
+
+
+        .settings-group-container .action-button {
+            grid-column: auto;
+            width: auto; margin: 8px auto 0;
+            display: block; max-width: 240px; /* تصغير طفيف */
+            background-color: var(--secondary-color);
+            color: var(--neutral-dark);
+            font-size: 0.85rem; /* تصغير طفيف */
+        }
+         .settings-group-container .action-button:hover {
+            background-color: #45dbc0;
+            box-shadow: 0 5px 12px rgba(80, 227, 194, 0.25);
+         }
+
+        #pageOrientationChooser .label-like, #pageSizeChooser .label-like { margin-bottom: 8px; font-size: 0.9rem; color: var(--neutral-dark); } /* تصغير طفيف */
+        #pageOrientationChooser label { margin-left: 10px; font-size: 0.82rem; color: var(--neutral-dark); } /* تصغير طفيف */
+        #pageSizeChooser select { font-weight: 600; font-size: 0.85rem; } /* تصغير طفيف */
+
+
+        #downloadLink { text-align: center; margin-top: 25px; padding-bottom: 18px; }
+        #downloadLink a { font-size: 0.9rem; padding: 10px 22px; } /* تصغير طفيف */
+
+
+        .simulated-page-outer {
+            width: 100%; max-width: 300px; /* تصغير طفيف */
+            margin: 8px auto; /* تقليل الهامش */
+            background-color: var(--white);
+            border: 1px dashed var(--primary-color);
+            position: relative;
+            overflow: hidden;
+            padding: 0;
+            box-shadow: 0 0 7px rgba(74, 144, 226, 0.1); /* ظل أخف */
+        }
+        .simulated-page-inner {
+            position: absolute;
+            background-color: rgba(74, 144, 226, 0.07);
+            border: 1px solid rgba(74, 144, 226, 0.25);
+            overflow: hidden;
+            margin:0;
+        }
+        .simulated-image {
+            position: absolute;
+            background-color: rgba(80, 227, 194, 0.45);
+            border: 1px solid rgba(80, 227, 194, 0.65);
+            font-size: 0.45rem; /* تصغير طفيف */
+            color: var(--neutral-dark); text-align: center;
+            overflow: hidden; white-space: nowrap;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 600;
+        }
+        #simulatedPageCountDisplay {
+            font-weight: 700;
+            font-size: 0.95rem; /* تصغير طفيف */
+            color: var(--neutral-dark);
+            margin-bottom: 8px;
+        }
+        #loadingIndicator {
+            text-align: center; font-size: 0.95rem; /* تصغير طفيف */
+            color: var(--primary-color);
+            margin: 15px 0; display: none;
+            font-weight: 600;
+        }
+
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';</script>
+    <!-- JSZip -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <h1>مكرر الصور الذكي</h1>
+
+        <form id="pdfForm" novalidate>
+            <div class="file-input-container-outer">
+                <!-- <h3>رفع الملفات</h3>  يمكن إضافة عنوان هنا إذا أردت -->
+                <div class="file-input-container">
+                    <label for="images" style="margin-bottom: 0;">رفع الصور (أو PDF أو ZIP):</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="images" name="images" accept="image/*,application/pdf,application/zip,application/x-zip-compressed" multiple required>
+                    </div>
+                    <button type="button" id="clearAllButton" class="action-button">مسح الكل</button>
+                </div>
+            </div>
+            <div id="loadingIndicator">جاري المعالجة...</div>
+
+            <div class="settings-row-flex-container">
+                <div class="settings-column">
+                    <h3>إعدادات مسبقة</h3>
+                    <div id="presetsContainer">
+                        <label class="label-like" for="presets">اختر إعداداً:</label>
+                        <select id="presets">
+                            <option value="">-- اختر إعداداً مسبقاً --</option>
+                            <option value="businessCardIndividual">بطاقة عمل - كل نسخة في صفحة</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-column">
+                    <h3>إعدادات موحدة لجميع الصور</h3>
+                    <div id="globalImageSettingsContainer" class="settings-group-container-grid">
+                        <div>
+                            <label for="globalWidth">العرض الموحد (سم):</label>
+                            <input type="number" id="globalWidth" name="globalWidth" step="any" min="0" placeholder="مثال: 5" oninput="updatePageSimulationDebounced()">
+                        </div>
+                        <div>
+                            <label for="globalHeight">الارتفاع الموحد (سم):</label>
+                            <input type="number" id="globalHeight" name="globalHeight" step="any" min="0" placeholder="مثال: 7" oninput="updatePageSimulationDebounced()">
+                        </div>
+                        <button type="button" id="applyGlobalDimensions" class="action-button" style="grid-column: 1 / -1;">تطبيق المقاسات على الكل</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-row-flex-container">
+                <div class="settings-column">
+                    <h3>إعدادات الصفحة</h3>
+                    <div id="pageSizeChooser">
+                        <div class="label-like">حجم الصفحة:</div>
+                        <select id="pageSize" name="pageSize" onchange="updatePageSimulationDebounced()">
+                            <option value="a4" selected>A4</option>
+                            <option value="letter">Letter</option>
+                            <option value="a3">A3</option>
+                        </select>
+                    </div>
+                     <div id="pageOrientationChooser" style="margin-top: 10px;"> <!-- إضافة هامش علوي بسيط للفصل -->
+                        <div class="label-like">اتجاه الصفحة:</div>
+                        <label class="inline-label"><input type="radio" name="pageOrientation" value="auto" id="orientationAuto" checked oninput="updatePageSimulationDebounced()"> تلقائي</label>
+                        <label class="inline-label"><input type="radio" name="pageOrientation" value="p" id="orientationPortrait" oninput="updatePageSimulationDebounced()"> طولي</label>
+                        <label class="inline-label"><input type="radio" name="pageOrientation" value="l" id="orientationLandscape" oninput="updatePageSimulationDebounced()"> عرضي</label>
+                    </div>
+                </div>
+                 <div class="settings-column">
+                    <h3>محاكاة الصفحة (تقريبية)</h3>
+                    <div id="pageSimulationContainer">
+                        <div id="simulatedPageCountDisplay">إجمالي الصفحات المقدر: 1</div>
+                        <div class="simulated-page-outer">
+                            <div class="simulated-page-inner">
+                                </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div id="previewContainer">
+                <!-- <h3>معاينة الصور وإعداداتها</h3> -->
+                <!-- يتم إضافة الصور هنا بواسطة JavaScript -->
+            </div>
+
+
+            <div class="settings-row-flex-container">
+                <div class="settings-column" style="flex-grow: 2;"> <!-- جعل هذا العمود يأخذ مساحة أكبر -->
+                    <h3>إعدادات الهوامش والمسافات</h3>
+                    <div id="marginSettingsContainer" class="settings-group-container-grid">
+                        <div><label for="leftMargin">الهامش الأيسر (سم):</label><input type="number" id="leftMargin" name="leftMargin" step="any" min="0" value="0.5" oninput="updatePageSimulationDebounced()"></div>
+                        <div><label for="rightMargin">الهامش الأيمن (سم):</label><input type="number" id="rightMargin" name="rightMargin" step="any" min="0" value="0.5" oninput="updatePageSimulationDebounced()"></div>
+                        <div><label for="topMargin">الهامش العلوي (سم):</label><input type="number" id="topMargin" name="topMargin" step="any" min="0" value="0.5" oninput="updatePageSimulationDebounced()"></div>
+                        <div><label for="bottomMargin">الهامش السفلي (سم):</label><input type="number" id="bottomMargin" name="bottomMargin" step="any" min="0" value="0.5" oninput="updatePageSimulationDebounced()"></div>
+                        <div><label for="horizontalGap">الفجوة الأفقية (سم):</label><input type="number" id="horizontalGap" name="horizontalGap" step="any" min="0" value="0.5" oninput="updatePageSimulationDebounced()"></div>
+                        <div><label for="verticalGap">الفجوة العمودية (سم):</label><input type="number" id="verticalGap" name="verticalGap" step="any" min="0" value="0.5" oninput="updatePageSimulationDebounced()"></div>
+                    </div>
+                </div>
+                <div class="settings-column" style="flex-grow: 1;">
+                     <div class="option-box" style="margin-top:0; margin-bottom:0; height: 100%; display: flex; align-items: center;">
+                        <label for="border" class="option-label" style="width:100%;">
+                            <input type="checkbox" id="border" name="border">
+                            <span class="inline-label">إضافة إطار أسود حول كل صورة</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+
+            <button type="submit" id="submitPdfButton">إنشاء PDF</button>
+        </form>
+
+        <div id="downloadLink"></div>
+    </div>
+
+<script>
+    let displayedImageFilesInfo = [];
+    let simulationDebounceTimer;
+    window.activePresetConfig = null;
+
+    const PAGE_DIMENSIONS_PT = {
+        'a4': [595.28, 841.89],
+        'letter': [612, 792],
+        'a3': [841.89, 1190.55]
+    };
+
+    function cmToPt(cm) { return cm * 28.35; }
+    function ptToCm(pt) { return pt / 28.35; }
+
+    function readFileAsDataURL(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (err) => reject(new Error("Error reading file: " + (err.target && err.target.error ? err.target.error.message : "Unknown error")));
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function getImageDimensions(dataURL) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve({ width: img.width, height: img.height });
+            img.onerror = () => reject(new Error("Error loading image for dimensions. Ensure the file is a valid image."));
+            img.src = dataURL;
+        });
+    }
+
+    const imagesInput = document.getElementById("images");
+    const previewContainer = document.getElementById("previewContainer");
+    const globalWidthInput = document.getElementById("globalWidth");
+    const globalHeightInput = document.getElementById("globalHeight");
+    const applyGlobalDimensionsButton = document.getElementById("applyGlobalDimensions");
+    const clearAllButton = document.getElementById("clearAllButton");
+    const pageSizeSelect = document.getElementById("pageSize");
+    const presetsSelect = document.getElementById("presets");
+    const loadingIndicator = document.getElementById("loadingIndicator");
+
+
+    function updatePageSimulationDebounced() {
+        clearTimeout(simulationDebounceTimer);
+        simulationDebounceTimer = setTimeout(updatePageSimulation, 400);
+    }
+
+    function updatePageSimulation() {
+        const simulationOuter = document.querySelector("#pageSimulationContainer .simulated-page-outer");
+        const simulationInner = document.querySelector("#pageSimulationContainer .simulated-page-inner");
+        const pageCountDisplay = document.getElementById("simulatedPageCountDisplay");
+
+        if (!simulationInner || !simulationOuter || !pageCountDisplay) return;
+        simulationInner.innerHTML = '';
+
+        const selectedPageSize = pageSizeSelect.value;
+        let pageOrientation = document.querySelector('input[name="pageOrientation"]:checked').value;
+
+        let pagePtW_config, pagePtH_config;
+        if (pageOrientation === 'auto') {
+            let landscapePreferenceCount = 0;
+            let portraitPreferenceCount = 0;
+            previewContainer.querySelectorAll(".settings-row").forEach(row => {
+                const wInput = parseFloat(row.querySelector(".widthInput").value) || 0;
+                const hInput = parseFloat(row.querySelector(".heightInput").value) || 0;
+                if (wInput > hInput) landscapePreferenceCount++;
+                else if (hInput > wInput) portraitPreferenceCount++;
+            });
+            pageOrientation = (landscapePreferenceCount > portraitPreferenceCount) ? 'l' : 'p';
+        }
+
+        if (pageOrientation === 'l') {
+            pagePtH_config = PAGE_DIMENSIONS_PT[selectedPageSize][0];
+            pagePtW_config = PAGE_DIMENSIONS_PT[selectedPageSize][1];
+        } else {
+            pagePtW_config = PAGE_DIMENSIONS_PT[selectedPageSize][0];
+            pagePtH_config = PAGE_DIMENSIONS_PT[selectedPageSize][1];
+        }
+
+        const outerMaxWidthPx = parseFloat(getComputedStyle(simulationOuter).maxWidth) || 300; // Adjusted
+        const scaleFactor = outerMaxWidthPx / pagePtW_config;
+
+        simulationOuter.style.width = (pagePtW_config * scaleFactor) + 'px';
+        simulationOuter.style.height = (pagePtH_config * scaleFactor) + 'px';
+        simulationOuter.style.padding = '0';
+
+        const leftMarginSim = cmToPtSafe("leftMargin", 0.5) * scaleFactor;
+        const rightMarginSim = cmToPtSafe("rightMargin", 0.5) * scaleFactor;
+        const topMarginSim = cmToPtSafe("topMargin", 0.5) * scaleFactor;
+        const bottomMarginSim = cmToPtSafe("bottomMargin", 0.5) * scaleFactor;
+
+        simulationInner.style.position = 'absolute';
+        simulationInner.style.left = leftMarginSim + 'px';
+        simulationInner.style.top = topMarginSim + 'px';
+        const printableWidthSim = (pagePtW_config * scaleFactor) - leftMarginSim - rightMarginSim;
+        const printableHeightSim = (pagePtH_config * scaleFactor) - topMarginSim - bottomMarginSim;
+
+        simulationInner.style.width = Math.max(0, printableWidthSim) + 'px';
+        simulationInner.style.height = Math.max(0, printableHeightSim) + 'px';
+        simulationInner.style.margin = '0';
+
+        const horizontalGapSim = cmToPtSafe("horizontalGap", 0.5) * scaleFactor;
+        const verticalGapSim = cmToPtSafe("verticalGap", 0.5) * scaleFactor;
+
+        let currentX = 0;
+        let currentY = 0;
+        let currentRowMaxHeight = 0;
+        let simulatedPageCount = 1;
+        let isFirstImageOnCurrentSimPage = true;
+
+        const imageSettingsRows = previewContainer.querySelectorAll(".settings-row");
+        imageSettingsRows.forEach((row, rowIndex) => {
+            const widthInput = row.querySelector(".widthInput");
+            const heightInput = row.querySelector(".heightInput");
+            const copiesInput = row.querySelector(".copiesInput");
+            const separatePagesCheckbox = row.querySelector(".separatePagesCheckbox");
+
+            let imgWidthCm = parseFloat(widthInput.value) || (parseFloat(globalWidthInput.value) || 6);
+            let imgHeightCm = parseFloat(heightInput.value) || (parseFloat(globalHeightInput.value) || 4);
+
+
+            const imgWidthSim = cmToPt(imgWidthCm) * scaleFactor;
+            const imgHeightSim = cmToPt(imgHeightCm) * scaleFactor;
+            const numCopies = parseInt(copiesInput.value) || 1;
+
+            for (let c = 0; c < numCopies; c++) {
+                if (separatePagesCheckbox && separatePagesCheckbox.checked) {
+                    if (!isFirstImageOnCurrentSimPage) {
+                        simulatedPageCount++;
+                        currentX = 0; currentY = 0; currentRowMaxHeight = 0;
+                        isFirstImageOnCurrentSimPage = true;
+                    }
+                }
+
+                if (currentX !== 0 && (currentX + imgWidthSim > printableWidthSim + 0.1)) {
+                    currentX = 0;
+                    currentY += currentRowMaxHeight + verticalGapSim;
+                    currentRowMaxHeight = 0;
+                    isFirstImageOnCurrentSimPage = true;
+                }
+                if (currentY + imgHeightSim > printableHeightSim + 0.1) {
+                    simulatedPageCount++;
+                    currentX = 0; currentY = 0; currentRowMaxHeight = 0;
+                    isFirstImageOnCurrentSimPage = true;
+                }
+
+                if (simulatedPageCount === 1 && printableWidthSim > 0 && printableHeightSim > 0) {
+                    const simImgDiv = document.createElement("div");
+                    simImgDiv.classList.add("simulated-image");
+                    simImgDiv.style.width = Math.min(imgWidthSim, printableWidthSim - currentX) + 'px';
+                    simImgDiv.style.height = Math.min(imgHeightSim, printableHeightSim - currentY) + 'px';
+                    simImgDiv.style.left = currentX + 'px';
+                    simImgDiv.style.top = currentY + 'px';
+                    simImgDiv.textContent = `ص${rowIndex+1}`;
+                    simulationInner.appendChild(simImgDiv);
+                }
+
+                currentX += imgWidthSim + horizontalGapSim;
+                currentRowMaxHeight = Math.max(currentRowMaxHeight, imgHeightSim);
+                isFirstImageOnCurrentSimPage = false;
+            }
+        });
+        pageCountDisplay.textContent = `إجمالي الصفحات المقدر: ${simulatedPageCount}`;
+    }
+
+
+    clearAllButton.addEventListener("click", function() {
+        previewContainer.innerHTML = '';
+        displayedImageFilesInfo = [];
+        globalWidthInput.value = '';
+        globalHeightInput.value = '';
+        presetsSelect.value = "";
+        window.activePresetConfig = null;
+
+        document.getElementById("leftMargin").value = "0.5";
+        document.getElementById("rightMargin").value = "0.5";
+        document.getElementById("topMargin").value = "0.5";
+        document.getElementById("bottomMargin").value = "0.5";
+        document.getElementById("horizontalGap").value = "0.5";
+        document.getElementById("verticalGap").value = "0.5";
+        document.getElementById("pageSize").value = "a4";
+        document.getElementById("orientationAuto").checked = true;
+
+
+        document.getElementById("images").value = '';
+        document.getElementById("downloadLink").innerHTML = '';
+        if (document.querySelector("#pageSimulationContainer .simulated-page-inner")) {
+             document.querySelector("#pageSimulationContainer .simulated-page-inner").innerHTML = '';
+        }
+        updatePageSimulation();
+    });
+
+    async function addImageToPreviewAndStore(fileId, dataURL, originalFileName, originalPixelW, originalPixelH, defaultWidthCm, defaultHeightCm) {
+        if (displayedImageFilesInfo.some(f => f.id === fileId)) {
+            console.log(`File/Page ${originalFileName} (ID: ${fileId}) is already displayed. Skipping.`);
+            return;
+        }
+
+        if (originalPixelW === undefined || originalPixelH === undefined) {
+            try {
+                const dims = await getImageDimensions(dataURL);
+                originalPixelW = dims.width;
+                originalPixelH = dims.height;
+            } catch (dimError) {
+                console.error(`Error getting dimensions for ${originalFileName}:`, dimError);
+                originalPixelW = 200;
+                originalPixelH = 200;
+            }
+        }
+
+
+        displayedImageFilesInfo.push({
+            id: fileId,
+            dataURL: dataURL,
+            originalPixelW: originalPixelW,
+            originalPixelH: originalPixelH,
+            originalFileName: originalFileName
+        });
+
+        const rowDiv = document.createElement("div");
+        rowDiv.classList.add("settings-row");
+        rowDiv.dataset.fileId = fileId;
+        rowDiv.dataset.originalPixelW = originalPixelW;
+        rowDiv.dataset.originalPixelH = originalPixelH;
+        rowDiv.dataset.imgDataUrl = dataURL;
+        rowDiv.dataset.originalFileName = originalFileName;
+
+        const imgPreview = document.createElement("img");
+        imgPreview.src = dataURL;
+        imgPreview.alt = `معاينة لـ ${originalFileName}`;
+
+        const inputsContainer = document.createElement("div");
+        inputsContainer.classList.add("row-inputs");
+
+        const titleLabel = document.createElement("div");
+        titleLabel.textContent = originalFileName;
+        titleLabel.classList.add("image-source-title");
+
+
+        const widthLabel = document.createElement("label");
+        widthLabel.textContent = "العرض (سم):";
+        const widthInput = document.createElement("input");
+        widthInput.type = "number"; widthInput.step = "any"; widthInput.min = "0";
+        widthInput.value = defaultWidthCm; widthInput.classList.add("widthInput");
+        widthInput.oninput = updatePageSimulationDebounced;
+
+
+        const heightLabel = document.createElement("label");
+        heightLabel.textContent = "الارتفاع (سم):";
+        const heightInput = document.createElement("input");
+        heightInput.type = "number"; heightInput.step = "any"; heightInput.min = "0";
+        heightInput.value = defaultHeightCm; heightInput.classList.add("heightInput");
+        heightInput.oninput = updatePageSimulationDebounced;
+
+        const copiesLabel = document.createElement("label");
+        copiesLabel.textContent = "عدد النسخ:";
+        const copiesInput = document.createElement("input");
+        copiesInput.type = "number"; copiesInput.step = "1"; copiesInput.min = "1";
+        copiesInput.value = (window.activePresetConfig && window.activePresetConfig.copies) ? window.activePresetConfig.copies : "1";
+        copiesInput.classList.add("copiesInput");
+        copiesInput.oninput = updatePageSimulationDebounced;
+
+        const aspectRatioLabel = document.createElement("label");
+        const aspectRatioCheckbox = document.createElement("input");
+        aspectRatioCheckbox.type = "checkbox"; aspectRatioCheckbox.classList.add("aspectRatioCheckbox");
+
+        const aspectRatioOptionsDiv = document.createElement("div");
+        aspectRatioOptionsDiv.classList.add("aspectRatioOptions");
+
+        const fixWidthLabel = document.createElement("label");
+        const fixWidthRadio = document.createElement("input");
+        fixWidthRadio.type = "radio"; fixWidthRadio.name = `aspectRatioMode_${fileId}`;
+        fixWidthRadio.value = "width"; fixWidthRadio.checked = true;
+        fixWidthLabel.appendChild(fixWidthRadio);
+        fixWidthLabel.appendChild(document.createTextNode("تثبيت العرض"));
+
+        const fixHeightLabel = document.createElement("label");
+        const fixHeightRadio = document.createElement("input");
+        fixHeightRadio.type = "radio"; fixHeightRadio.name = `aspectRatioMode_${fileId}`;
+        fixHeightRadio.value = "height";
+        fixHeightLabel.appendChild(fixHeightRadio);
+        fixHeightLabel.appendChild(document.createTextNode("تثبيت الارتفاع"));
+
+        aspectRatioOptionsDiv.appendChild(fixWidthLabel);
+        aspectRatioOptionsDiv.appendChild(fixHeightLabel);
+
+        const preserveAspectRatioContainer = document.createElement('div');
+        preserveAspectRatioContainer.style.display = 'flex'; preserveAspectRatioContainer.style.alignItems = 'center';
+        preserveAspectRatioContainer.appendChild(aspectRatioCheckbox);
+        preserveAspectRatioContainer.appendChild(document.createTextNode(" الحفاظ على النسبة"));
+        aspectRatioLabel.appendChild(preserveAspectRatioContainer);
+
+        const separatePagesLabel = document.createElement("label");
+        const separatePagesCheckbox = document.createElement("input");
+        separatePagesCheckbox.type = "checkbox"; separatePagesCheckbox.classList.add("separatePagesCheckbox");
+        if (window.activePresetConfig && window.activePresetConfig.separatePagesDefault) {
+            separatePagesCheckbox.checked = true;
+        }
+        separatePagesCheckbox.onchange = updatePageSimulationDebounced;
+
+
+        const separatePagesContainer = document.createElement('div');
+        separatePagesContainer.style.display = 'flex'; separatePagesContainer.style.alignItems = 'center';
+        separatePagesContainer.appendChild(separatePagesCheckbox);
+        separatePagesContainer.appendChild(document.createTextNode(" صفحات منفصلة لهذه الصورة"));
+        separatePagesLabel.appendChild(separatePagesContainer);
+
+        inputsContainer.appendChild(titleLabel);
+        inputsContainer.appendChild(widthLabel); inputsContainer.appendChild(widthInput);
+        inputsContainer.appendChild(heightLabel); inputsContainer.appendChild(heightInput);
+        inputsContainer.appendChild(copiesLabel); inputsContainer.appendChild(copiesInput);
+        inputsContainer.appendChild(aspectRatioLabel);
+        inputsContainer.appendChild(aspectRatioOptionsDiv);
+        inputsContainer.appendChild(separatePagesLabel);
+
+        const rowButtonsContainer = document.createElement("div");
+        rowButtonsContainer.classList.add("row-buttons-container");
+
+        const removeButton = document.createElement("button");
+        removeButton.textContent = "إزالة";
+        removeButton.type = "button";
+        removeButton.classList.add("action-button");
+        removeButton.addEventListener("click", function() {
+            const rowToRemove = this.closest(".settings-row");
+            const idToRemove = rowToRemove.dataset.fileId;
+            rowToRemove.remove();
+            displayedImageFilesInfo = displayedImageFilesInfo.filter(f => f.id !== idToRemove);
+            updatePageSimulationDebounced();
+        });
+        rowButtonsContainer.appendChild(removeButton);
+        inputsContainer.appendChild(rowButtonsContainer);
+
+        rowDiv.appendChild(imgPreview); rowDiv.appendChild(inputsContainer);
+        previewContainer.appendChild(rowDiv);
+        updatePageSimulationDebounced();
+    }
+
+    async function processImageFile(file, defaultWidthCm, defaultHeightCm) {
+        const fileId = `${file.name}-${file.size}-${file.lastModified}`;
+        if (displayedImageFilesInfo.some(f => f.id === fileId)) {
+            console.log(`File ${file.name} (ID: ${fileId}) is already displayed. Skipping.`);
+            return;
+        }
+        try {
+            const dataURL = await readFileAsDataURL(file);
+            const { width: imgPixelW, height: imgPixelH } = await getImageDimensions(dataURL);
+            await addImageToPreviewAndStore(fileId, dataURL, file.name, imgPixelW, imgPixelH, defaultWidthCm, defaultHeightCm);
+        } catch (error) {
+            console.error(`Error processing image file ${file.name}:`, error);
+            alert(`حدث خطأ أثناء معالجة الملف ${file.name}. ${error.message}.`);
+        }
+    }
+
+    async function processPdfFile(file, defaultWidthCm, defaultHeightCm) {
+        console.log(`Processing PDF: ${file.name}...`);
+        loadingIndicator.style.display = 'block';
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const viewport = page.getViewport({ scale: 2.0 });
+
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                await page.render(renderContext).promise;
+
+                const dataURL = canvas.toDataURL('image/png');
+                const pageFileId = `${file.name}-page${i}-${file.size}-${file.lastModified}`;
+                const pageFileName = `${file.name} (صفحة ${i})`;
+
+                await addImageToPreviewAndStore(pageFileId, dataURL, pageFileName, canvas.width, canvas.height, defaultWidthCm, defaultHeightCm);
+            }
+            console.log(`Finished processing PDF: ${file.name}`);
+        } catch (error) {
+            console.error(`Error processing PDF file ${file.name}:`, error);
+            alert(`حدث خطأ أثناء معالجة ملف PDF ${file.name}. ${error.message || error}.`);
+        } finally {
+            loadingIndicator.style.display = 'none';
+        }
+    }
+
+    async function processZipFile(file, defaultWidthCm, defaultHeightCm) {
+        console.log(`Processing ZIP: ${file.name}...`);
+        loadingIndicator.style.display = 'block';
+        try {
+            const jszip = new JSZip();
+            const zip = await jszip.loadAsync(file);
+            let imageFound = false;
+            const imagePromises = [];
+
+            for (const filenameInZip of Object.keys(zip.files)) {
+                const zipEntry = zip.files[filenameInZip];
+                if (!zipEntry.dir) {
+                    const lowerFilename = filenameInZip.toLowerCase();
+                    if (lowerFilename.endsWith('.png') || lowerFilename.endsWith('.jpg') || lowerFilename.endsWith('.jpeg') || lowerFilename.endsWith('.gif') || lowerFilename.endsWith('.webp')) {
+                        imageFound = true;
+                        const promise = (async () => {
+                            try {
+                                const fileData = await zipEntry.async('base64');
+                                const mimeType = lowerFilename.endsWith('.png') ? 'image/png' :
+                                                 lowerFilename.endsWith('.jpg') || lowerFilename.endsWith('.jpeg') ? 'image/jpeg' :
+                                                 lowerFilename.endsWith('.gif') ? 'image/gif' : 'image/webp';
+                                const dataURL = `data:${mimeType};base64,${fileData}`;
+
+                                const zipImageFileId = `${file.name}-${filenameInZip}-${file.size}-${file.lastModified}`;
+                                const zipImageName = `${filenameInZip} (من ${file.name})`;
+
+                                const { width: imgPixelW, height: imgPixelH } = await getImageDimensions(dataURL);
+                                await addImageToPreviewAndStore(zipImageFileId, dataURL, zipImageName, imgPixelW, imgPixelH, defaultWidthCm, defaultHeightCm);
+                            } catch (imgError) {
+                                console.error(`Error processing image ${filenameInZip} from ZIP ${file.name}:`, imgError);
+                                alert(`حدث خطأ أثناء معالجة الصورة ${filenameInZip} من الملف المضغوط ${file.name}.`);
+                            }
+                        })();
+                        imagePromises.push(promise);
+                    }
+                }
+            }
+
+            await Promise.all(imagePromises);
+
+            if (!imageFound) {
+                alert(`لم يتم العثور على صور مدعومة في الملف المضغوط: ${file.name}`);
+            }
+            console.log(`Finished processing ZIP: ${file.name}`);
+        } catch (error) {
+            console.error(`Error processing ZIP file ${file.name}:`, error);
+            alert(`حدث خطأ أثناء معالجة الملف المضغوط ${file.name}. ${error.message || error}.`);
+        } finally {
+            loadingIndicator.style.display = 'none';
+        }
+    }
+
+
+    imagesInput.addEventListener("change", async function() {
+        const newSelectedFiles = Array.from(imagesInput.files);
+        if (!newSelectedFiles.length) return;
+
+        loadingIndicator.style.display = 'block';
+
+        let defaultWidth = globalWidthInput.value || "6";
+        let defaultHeight = globalHeightInput.value || "4";
+
+        if (window.activePresetConfig && window.activePresetConfig.width) {
+            defaultWidth = window.activePresetConfig.width;
+        }
+        if (window.activePresetConfig && window.activePresetConfig.height) {
+            defaultHeight = window.activePresetConfig.height;
+        }
+
+        for (const file of newSelectedFiles) {
+            const fileType = file.type.toLowerCase();
+            const fileNameLower = file.name.toLowerCase();
+
+            if (fileType.startsWith("image/")) {
+                await processImageFile(file, defaultWidth, defaultHeight);
+            } else if (fileType === "application/pdf" || fileNameLower.endsWith(".pdf")) {
+                await processPdfFile(file, defaultWidth, defaultHeight);
+            } else if (fileType === "application/zip" || fileType === "application/x-zip-compressed" || fileNameLower.endsWith(".zip")) {
+                await processZipFile(file, defaultWidth, defaultHeight);
+            } else {
+                alert(`نوع الملف غير مدعوم: ${file.name} (${file.type})`);
+                console.warn(`Unsupported file type: ${file.name} (${file.type})`);
+            }
+        }
+        imagesInput.value = "";
+        loadingIndicator.style.display = 'none';
+        updatePageSimulationDebounced();
+    });
+
+
+    applyGlobalDimensionsButton.addEventListener("click", function() {
+        const globalW = globalWidthInput.value;
+        const globalH = globalHeightInput.value;
+        if (!globalW && !globalH) {
+            alert("يرجى إدخال قيمة للعرض أو الارتفاع الموحد على الأقل."); return;
+        }
+        const imageSettingRows = previewContainer.querySelectorAll(".settings-row");
+        if (imageSettingRows.length > 0) {
+            imageSettingRows.forEach(row => {
+                if (globalW) row.querySelector(".widthInput").value = globalW;
+                if (globalH) row.querySelector(".heightInput").value = globalH;
+            });
+            alert("تم تطبيق المقاسات الموحدة على جميع الصور المعروضة.");
+            updatePageSimulationDebounced();
+        } else {
+            alert("يرجى رفع صور أولاً لتطبيق المقاسات عليها.");
+        }
+    });
+
+    presetsSelect.addEventListener("change", function() {
+        const selectedValue = this.value;
+        if (selectedValue === "businessCardIndividual") {
+            window.activePresetConfig = {
+                separatePagesDefault: true,
+                width: 13,
+                height: 8,
+                copies: 1
+            };
+            globalWidthInput.value = 13;
+            globalHeightInput.value = 8;
+            document.getElementById("topMargin").value = 4.5;
+            document.getElementById("leftMargin").value = 4;
+            document.getElementById("rightMargin").value = 4;
+            document.getElementById("bottomMargin").value = 1;
+            document.getElementById("horizontalGap").value = 0;
+            document.getElementById("verticalGap").value = 0;
+            document.getElementById("orientationPortrait").checked = true;
+            pageSizeSelect.value = "a4";
+
+            previewContainer.querySelectorAll(".settings-row").forEach(row => {
+                row.querySelector(".widthInput").value = 13;
+                row.querySelector(".heightInput").value = 8;
+                row.querySelector(".copiesInput").value = 1;
+                const sepChk = row.querySelector(".separatePagesCheckbox");
+                if (sepChk) sepChk.checked = true;
+            });
+        } else {
+            window.activePresetConfig = null;
+        }
+        updatePageSimulationDebounced();
+    });
+
+
+    function cmToPtSafe(idOrValue, defaultValue = 0.5) {
+        let value;
+        if (typeof idOrValue === 'string') {
+            const el = document.getElementById(idOrValue);
+            if (!el) return cmToPt(defaultValue);
+            value = parseFloat(el.value);
+            if (isNaN(value)) {
+                const defaultValueAttr = el.getAttribute('value');
+                const defaultAttrValue = parseFloat(defaultValueAttr);
+                return cmToPt(isNaN(defaultAttrValue) ? defaultValue : defaultAttrValue);
+            }
+        } else {
+            value = parseFloat(idOrValue);
+             if (isNaN(value)) return cmToPt(defaultValue);
+        }
+        return cmToPt(Math.max(0, value));
+    }
+
+
+    document.getElementById("pdfForm").addEventListener("submit", async function(e) {
+        e.preventDefault();
+        if (previewContainer.querySelectorAll(".settings-row").length === 0) {
+            alert("يرجى رفع صورة واحدة على الأقل لإنشاء ملف PDF.");
+            return;
+        }
+        const { jsPDF } = window.jspdf;
+        const selectedPageSize = pageSizeSelect.value || 'a4';
+
+        let determinedOrientation = document.querySelector('input[name="pageOrientation"]:checked').value;
+        if (determinedOrientation === 'auto') {
+            let landscapePreferenceCount = 0;
+            let portraitPreferenceCount = 0;
+            const imageSettingsRows = previewContainer.querySelectorAll(".settings-row");
+            imageSettingsRows.forEach(row => {
+                const w = parseFloat(row.querySelector(".widthInput").value) || 0;
+                const h = parseFloat(row.querySelector(".heightInput").value) || 0;
+                if (w > h) landscapePreferenceCount++;
+                else if (h > w) portraitPreferenceCount++;
+            });
+            determinedOrientation = (landscapePreferenceCount > portraitPreferenceCount) ? 'l' : 'p';
+            if (imageSettingsRows.length === 0 && displayedImageFilesInfo.length === 0) determinedOrientation = 'p';
+        }
+
+        const pdf = new jsPDF({
+            orientation: determinedOrientation,
+            unit: 'pt',
+            format: selectedPageSize
+        });
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+
+        const leftMargin = cmToPtSafe("leftMargin"), rightMargin = cmToPtSafe("rightMargin");
+        const topMargin = cmToPtSafe("topMargin"), bottomMargin = cmToPtSafe("bottomMargin");
+        const horizontalGap = cmToPtSafe("horizontalGap"), verticalGap = cmToPtSafe("verticalGap");
+        const border = document.getElementById("border").checked;
+
+        let currentX = leftMargin, currentY = topMargin, currentRowMaxHeight = 0, isFirstImageOnPage = true;
+        const rows = document.querySelectorAll(".settings-row");
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const dataURL = row.dataset.imgDataUrl;
+            const imgPixelW = parseFloat(row.dataset.originalPixelW);
+            const imgPixelH = parseFloat(row.dataset.originalPixelH);
+            const fileIdForRow = row.dataset.fileId;
+
+            const widthInput = row.querySelector(".widthInput"), heightInput = row.querySelector(".heightInput");
+            const copiesInput = row.querySelector(".copiesInput"), aspectRatioCheckbox = row.querySelector(".aspectRatioCheckbox");
+            const separatePagesCheckbox = row.querySelector(".separatePagesCheckbox");
+
+            const aspectRatioOptions = fileIdForRow ? row.querySelectorAll(`input[name="aspectRatioMode_${fileIdForRow}"]`) : [];
+            let chosenMode = "width";
+            aspectRatioOptions.forEach(radio => { if (radio.checked) chosenMode = radio.value; });
+
+            let width_cm_user = parseFloat(widthInput.value) || 0;
+            let height_cm_user = parseFloat(heightInput.value) || 0;
+            const numCopies = parseInt(copiesInput.value) || 1;
+
+
+            function calculateImageDimensionsPt(w_cm, h_cm, preserveAr, arMode, originalPxW, originalPxH) {
+                let imgWidthPt, imgHeightPt;
+                const canPreserveAr = preserveAr && originalPxW && originalPxH && originalPxW > 0 && originalPxH > 0;
+                const originalAspectRatio = canPreserveAr ? (originalPxH / originalPxW) : 1;
+
+                if (!canPreserveAr || (!w_cm && !h_cm)) {
+                    imgWidthPt = cmToPt(w_cm || (h_cm ? h_cm / originalAspectRatio : 6) );
+                    imgHeightPt = cmToPt(h_cm || (w_cm ? w_cm * originalAspectRatio : (w_cm ? w_cm * originalAspectRatio : 4)) );
+                } else {
+                    if (w_cm && !h_cm) {
+                        imgWidthPt = cmToPt(w_cm);
+                        imgHeightPt = imgWidthPt * originalAspectRatio;
+                    } else if (!w_cm && h_cm) {
+                        imgHeightPt = cmToPt(h_cm);
+                        imgWidthPt = imgHeightPt / originalAspectRatio;
+                    } else {
+                        if (arMode === "width") {
+                            imgWidthPt = cmToPt(w_cm);
+                            imgHeightPt = imgWidthPt * originalAspectRatio;
+                        } else {
+                            imgHeightPt = cmToPt(h_cm);
+                            imgWidthPt = imgHeightPt / originalAspectRatio;
+                        }
+                    }
+                }
+                return { imgWidthPt: Math.max(1, imgWidthPt), imgHeightPt: Math.max(1, imgHeightPt) };
+            }
+
+            let targetDim = calculateImageDimensionsPt(width_cm_user, height_cm_user, aspectRatioCheckbox.checked, chosenMode, imgPixelW, imgPixelH);
+
+            let firstCopyOfThisImageGroup = true;
+
+            for (let c = 0; c < numCopies; c++) {
+                 if (separatePagesCheckbox.checked) {
+                     if (!isFirstImageOnPage || !firstCopyOfThisImageGroup) {
+                          pdf.addPage(selectedPageSize, determinedOrientation);
+                          currentX = leftMargin; currentY = topMargin; currentRowMaxHeight = 0;
+                          isFirstImageOnPage = true;
+                     }
+                 }
+                 firstCopyOfThisImageGroup = false;
+
+
+                let imgEffectiveW_onPage = targetDim.imgWidthPt;
+                let imgEffectiveH_onPage = targetDim.imgHeightPt;
+                let w_pdf_param = targetDim.imgWidthPt;
+                let h_pdf_param = targetDim.imgHeightPt;
+                // let current_total_angle = 0; // Removed as auto-rotate is removed
+
+                if (!w_pdf_param || !h_pdf_param || w_pdf_param <= 0 || h_pdf_param <= 0) continue;
+
+                if (currentX !== leftMargin && (currentX + imgEffectiveW_onPage > pageWidth - rightMargin + 0.1)) {
+                    currentX = leftMargin; currentY += currentRowMaxHeight + verticalGap; currentRowMaxHeight = 0;
+                    isFirstImageOnPage = true;
+                }
+                if (currentY + imgEffectiveH_onPage > pageHeight - bottomMargin + 0.1) {
+                    if (!(isFirstImageOnPage && currentX === leftMargin && currentY === topMargin && imgEffectiveH_onPage > pageHeight - topMargin - bottomMargin) ) {
+                         pdf.addPage(selectedPageSize, determinedOrientation);
+                         currentX = leftMargin; currentY = topMargin; currentRowMaxHeight = 0;
+                         isFirstImageOnPage = true;
+                    }
+                }
+
+                let x_pdf_draw = currentX;
+                let y_pdf_draw = currentY;
+
+                if (w_pdf_param <= 0 || h_pdf_param <=0) {
+                    console.warn("Skipping image with zero or negative dimensions for PDF:", w_pdf_param, h_pdf_param);
+                    continue;
+                }
+
+                try {
+                    let imageType = 'PNG';
+                    if (dataURL.startsWith('data:image/jpeg') || dataURL.startsWith('data:image/jpg')) {
+                        imageType = 'JPEG';
+                    }
+                    pdf.addImage(dataURL, imageType, x_pdf_draw, y_pdf_draw, w_pdf_param, h_pdf_param, undefined, 'NONE');
+                } catch (imgError) {
+                    console.error("Error adding image to PDF:", imgError, "DataURL snippet:", dataURL.substring(0,100));
+                    pdf.text("Error rendering image.", x_pdf_draw, y_pdf_draw + 10);
+                }
+
+                if (border) {
+                    pdf.setLineWidth(0.8);
+                    pdf.setDrawColor(0, 0, 0);
+                    pdf.rect(currentX, currentY, imgEffectiveW_onPage, imgEffectiveH_onPage);
+                }
+
+                currentX += imgEffectiveW_onPage + horizontalGap;
+                currentRowMaxHeight = Math.max(currentRowMaxHeight, imgEffectiveH_onPage);
+                isFirstImageOnPage = false;
+            }
+        }
+
+        try {
+            const fileName = `output_smart_repeater_${selectedPageSize}.pdf`;
+            pdf.save(fileName);
+            const pdfBlob = pdf.output("blob");
+            const url = URL.createObjectURL(pdfBlob);
+            document.getElementById("downloadLink").innerHTML =
+                `<a href="${url}" download="${fileName}" class="action-button">تحميل PDF مرة أخرى (${fileName})</a>`;
+        } catch (saveError) {
+            console.error("Error saving or creating blob for PDF:", saveError);
+            alert("حدث خطأ أثناء حفظ ملف PDF. يرجى التحقق من وحدة التحكم.");
+        }
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+        updatePageSimulation();
+        const marginInputs = document.querySelectorAll('#marginSettingsContainer input[type="number"], #globalImageSettingsContainer input[type="number"]');
+        marginInputs.forEach(input => {
+            input.addEventListener('input', updatePageSimulationDebounced);
+        });
+        const globalImageSettings = document.getElementById('globalImageSettingsContainer');
+        if (globalImageSettings && !globalImageSettings.classList.contains('settings-group-container-grid')) {
+            globalImageSettings.classList.add('settings-group-container-grid');
+        }
+        const marginSettings = document.getElementById('marginSettingsContainer');
+        if (marginSettings && !marginSettings.classList.contains('settings-group-container-grid')) {
+            marginSettings.classList.add('settings-group-container-grid');
+        }
+    });
+
+</script>
+</body>
+</html>

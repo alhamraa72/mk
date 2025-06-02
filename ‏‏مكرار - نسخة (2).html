@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>معالج ملفات مع تحديد عدد النسخ عند تحميل الكل</title>
+    <style>
+        :root {
+            --primary-color: #007bff; /* أزرق */
+            --secondary-color: #6c757d; /* رمادي */
+            --danger-color: #dc3545; /* أحمر */
+            --light-bg: #f8f9fa;
+            --dark-text: #212529;
+            --light-text: #f8f9fa;
+            --border-color: #dee2e6;
+            --card-bg: #ffffff;
+            --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            --border-radius: 0.5rem; /* 8px */
+        }
+
+        body {
+            font-family: 'Tajawal', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* خط عربي محسن */
+            margin: 0;
+            padding: 0;
+            background-color: #e9ecef; /* خلفية أفتح قليلاً للصفحة كلها */
+            color: var(--dark-text);
+            text-align: center;
+            direction: rtl;
+            line-height: 1.6;
+        }
+
+        .main-container {
+            max-width: 1100px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            padding: 25px;
+            margin-bottom: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            text-align: right; /* محاذاة النص لليمين داخل البطاقات */
+        }
+
+        .card-header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .card-header h1, .card-header h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+        
+        h1 { font-size: 2.2em; }
+        h2 { font-size: 1.8em; }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            gap: 0.5rem;
+        }
+        .input-group label:not(#fileUploadLabel) {
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+            display: block;
+            color: #333;
+        }
+
+        /* Hide original file input but keep it functional */
+        .file-drop-area input[type="file"] {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+
+        /* Styling for the new file drop area */
+        .file-drop-area {
+            border: 3px dashed var(--primary-color); 
+            border-radius: var(--border-radius);
+            padding: 30px; 
+            background-color: var(--light-bg);
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, transform 0.1s ease;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 200px; 
+            text-align: center; 
+            margin-bottom: 1.5rem; 
+        }
+
+        .file-drop-area:hover {
+            transform: scale(1.01); 
+        }
+        .file-drop-area.dragover { /* Style when dragging over */
+            background-color: #e0e9f5; 
+            border-style: solid;
+            border-color: #0056b3; 
+        }
+
+        /* Styling for the label acting as the drop zone */
+        .file-drop-area label#fileUploadLabel {
+            font-weight: normal; 
+            margin-bottom: 0; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%; 
+            height: 100%; 
+        }
+
+        /* File drop icon (can be SVG or Font Awesome) */
+        .file-drop-icon {
+            font-size: 3em; 
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        /* Instructional text within the drop zone */
+        .file-drop-text {
+            font-size: 1.2em; 
+            color: var(--secondary-color);
+            margin-bottom: 15px; 
+        }
+        .file-drop-text strong {
+            color: var(--primary-color);
+        }
+
+        /* "Choose files" button text within the drop zone */
+        .file-drop-button-text {
+            display: inline-block; 
+            padding: 12px 25px; 
+            background-color: var(--primary-color);
+            color: var(--light-text);
+            border-radius: 0.375rem;
+            font-size: 1em; 
+            transition: background-color 0.2s ease;
+            border: none;
+        }
+
+        .file-drop-area:hover .file-drop-button-text {
+            background-color: #0056b3; 
+        }
+
+        input[type="number"] { /* Removed button from this rule */
+            padding: 12px 20px;
+            border-radius: 0.375rem; 
+            border: 1px solid var(--border-color);
+            font-size: 1em;
+            transition: all 0.2s ease-in-out;
+        }
+        input[type="number"] {
+            max-width: 70px; 
+            text-align: center;
+            margin-left: 5px; /* For RTL, this pushes it slightly to the left of potential text */
+            direction: ltr; /* Ensure numbers are LTR */
+        }
+
+        button {
+            padding: 12px 20px;
+            border-radius: 0.375rem;
+            border: 1px solid var(--primary-color); /* Default border color */
+            font-size: 1em;
+            transition: all 0.2s ease-in-out;
+            background-color: var(--primary-color); /* Default background for enabled */
+            color: var(--light-text); /* Default text color for enabled */
+            cursor: pointer;
+        }
+        button:hover:not(:disabled) { /* Apply hover only if not disabled */
+            opacity: 0.85;
+            transform: translateY(-1px);
+            box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+        }
+        button.secondary {    
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        button.secondary:hover:not(:disabled) {
+             opacity: 0.85;
+        }
+        button.danger {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+         button.danger:hover:not(:disabled) {
+             opacity: 0.85;
+        }
+        button.small {    
+            padding: 0.5rem 0.75rem; 
+            font-size: 0.875em; 
+        }
+        /* Styles for the disabled process button */
+        button#processAndCreateMasterZipButton:disabled {
+            background-color: #ced4da; /* Gray background for disabled */
+            border-color: #ced4da; /* Gray border for disabled */
+            color: #6c757d; /* Darker gray text for disabled */
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            opacity: 0.65; /* Standard opacity for disabled elements */
+        }
+        /* General disabled style for other buttons if needed, but specific one above takes precedence for process button */
+        button:disabled {
+            background-color: #ced4da;
+            border-color: #ced4da;
+            color: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            opacity: 0.65;
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr; 
+            gap: 20px;
+            align-items: stretch; 
+        }
+        .controls-grid .input-group:not(.file-drop-area) {
+             display: flex;
+             flex-direction: column; 
+             align-items: stretch; 
+        }
+        .controls-grid .input-group:not(.file-drop-area) button {
+            width: 100%; 
+        }
+
+
+        .reference-status-section {
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--light-bg);
+            text-align: center;
+        }
+        #clipboardStatusDisplay {
+            font-weight: bold;
+            color: var(--primary-color);
+            font-size: 1.2em;
+            display: block;    
+            margin-top: 0.5rem;
+        }
+
+        #imagePreviewContainer {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            padding: 15px;
+            border: 2px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            min-height: 150px;
+            background-color: #fdfdfd;
+        }
+
+        .processed-image-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+        }
+
+        .processed-image {
+            max-width: 150px;
+            max-height: 150px;
+            border: 2px solid var(--primary-color);
+            border-radius: 0.375rem;
+            object-fit: contain;
+        }
+        .image-name-label {
+            font-size: 0.85em;
+            color: #495057;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        .fullscreen-image-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.9); display: flex;
+            justify-content: center; align-items: center; z-index: 1000;
+            cursor: zoom-out; padding: 15px; box-sizing: border-box;
+        }
+        .fullscreen-image-overlay img {
+            max-width: 95%; max-height: 95%; object-fit: contain;
+            border: 4px solid white; border-radius: var(--border-radius);
+            box-shadow: 0 0 35px rgba(0,0,0,0.5);
+        }
+
+        #loadingIndicator, #historyLoadingIndicator {
+            display: none;
+            margin: 20px 0;
+            font-size: 1.25em;
+            color: var(--primary-color);
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,123,255,0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 0.75s linear infinite;
+            margin-right: 10px; /* For RTL */
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 0.75rem 1.25rem;
+            margin-top: 1rem;
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            text-align: right;
+            border: 1px solid transparent;
+        }
+        .alert-danger { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .alert-success { background-color: #d1e7dd; color: #0f5132; border-color: #badbcc; }
+        .alert-warning { background-color: #fff3cd; color: #664d03; border-color: #ffecb5; }
+        .alert-info { background-color: #cff4fc; color: #055160; border-color: #b6effb; }
+
+        #messages {
+            min-height: 20px;
+            margin-top: 1rem;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        .file-list-container {
+            text-align: right;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            max-height: 150px;
+            overflow-y: auto;
+            background-color: var(--light-bg);
+        }
+        .file-list-container strong { display: block; margin-bottom: 5px; color: var(--dark-text);}
+        .file-list-container ul { list-style-type: none; padding-right: 0; margin-right: 0; }
+        .file-list-container li { font-size: 0.9em; color: #495057; padding: 4px 0; }
+
+        #historySection .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;    
+        }
+        .history-controls {
+            display: flex;
+            gap: 10px;    
+            margin-top: 10px;    
+        }
+        
+        .history-table-container {
+            max-height: 400px;    
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        #historyTable {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+        #historyTable th, #historyTable td {
+            border: 1px solid var(--border-color);
+            padding: 8px 10px;
+            text-align: right;
+            vertical-align: middle;
+        }
+        #historyTable th {
+            background-color: var(--light-bg);
+            font-weight: bold;
+            color: var(--primary-color);
+            position: sticky;    
+            top: 0;    
+            z-index: 1;    
+        }
+        #historyTable tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        #historyTable tr:hover {
+            background-color: #f1f1f1;
+        }
+        .history-item-actions {
+            display: flex;    
+            align-items: center;
+            gap: 5px;
+        }
+        .history-item-actions button {
+            margin-right: 0;    
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .controls-grid {
+                grid-template-columns: 1fr; 
+            }
+            .file-drop-area {
+                min-height: 180px; 
+                padding: 25px;
+            }
+            .file-drop-icon {
+                font-size: 2.8em;
+            }
+            .file-drop-text {
+                font-size: 1.1em;
+            }
+
+            #historySection .card-header, .history-controls {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;    
+            }
+             .history-controls button {
+                width: 100%;
+            }
+            #historyTable, #historyTable thead, #historyTable tbody, #historyTable th, #historyTable td, #historyTable tr {
+                display: block;
+            }
+            #historyTable thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            #historyTable tr { border: 1px solid #ccc; margin-bottom: 0.5rem; }
+            #historyTable td {
+                border: none;
+                border-bottom: 1px solid #eee;
+                position: relative;
+                padding-left: 50%; 
+                text-align: left; 
+                display: flex;    
+                justify-content: space-between;    
+                align-items: center;
+            }
+            #historyTable td:before {
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                right: 6px; 
+                width: 45%;
+                padding-right: 10px; 
+                white-space: nowrap;
+                content: attr(data-label);
+                font-weight: bold;
+                text-align: right; 
+            }
+            .history-item-actions {    
+                padding-left: 0 !important; 
+                justify-content: flex-start !important; 
+            }
+        }
+        @media (max-width: 480px) { 
+            .file-drop-area {
+                min-height: 150px;
+                padding: 20px;
+            }
+            .file-drop-icon {
+                font-size: 2.5em;
+            }
+            .file-drop-text {
+                font-size: 1em;
+            }
+            .file-drop-button-text {
+                padding: 10px 20px;
+                font-size: 0.9em;
+            }
+             h1 { font-size: 1.8em; }
+             h2 { font-size: 1.5em; }
+        }
+
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="main-container">
+        <div class="card">
+            <div class="card-header">
+                <h1>نظام إدارة وأرشفة المطبوعات</h1>    
+            </div>
+            <div class="controls-grid">
+                <div class="input-group file-drop-area" id="fileDropAreaContainer"> 
+                    <label for="fileUpload" id="fileUploadLabel">
+                        <div class="file-drop-icon">
+                            <span>&#x1F4C2;</span> 
+                        </div>
+                        <div class="file-drop-text">
+                            <strong>اسحب وأفلت الملفات هنا</strong><br> أو انقر لاختيار الملفات
+                        </div>
+                        <span class="file-drop-button-text">1. اختر الملفات</span>
+                    </label>
+                    <input type="file" id="fileUpload" accept="image/*,application/pdf,application/zip,application/x-zip-compressed" multiple>
+                </div>
+                
+                <div class="input-group">
+                     <label for="processAndCreateMasterZipButton">2. ابدأ المعالجة:</label> 
+                    <button id="processAndCreateMasterZipButton">معالجة وإنشاء الـ ZIP</button>
+                </div>
+            </div>
+            
+             <div class="reference-status-section" style="margin-top: 1rem;">    
+                <div>الرقم المرجعي من الحافظة (الأرقام فقط): <span id="clipboardStatusDisplay">يرجى نسخ الرقم المرجعي أولاً.</span></div>
+            </div>
+
+            <div id="loadingIndicator">
+                جاري العمل، يرجى الانتظار...
+                <div class="spinner"></div>
+            </div>
+            <div id="messages"></div>    
+        </div>
+
+
+        <div class="card" id="previewCard" style="display: none;">    
+            <div class="card-header">
+                <h2>معاينة الصور</h2>
+            </div>
+            <div id="imagePreviewContainer">
+                <!-- Image previews will be added here by JavaScript -->
+            </div>
+        </div>
+
+
+        <div class="card" id="historySection">
+            <div class="card-header">
+                <h2>سجل العمليات</h2>    
+                <div class="history-controls">
+                    <button id="downloadAllHistoryButton" class="secondary small">تحميل الكل ومسح السجل</button>
+                    <button id="clearAllHistoryButton" class="danger small">مسح السجل (يدويًا)</button>
+                </div>
+            </div>
+            <div id="historyLoadingIndicator">
+                جاري تحميل السجل...
+                <div class="spinner"></div>
+            </div>
+            <div class="history-table-container">
+                <table id="historyTable">
+                    <thead>
+                        <tr>
+                            <th>رقم مرجعي</th>
+                            <th>التاريخ</th>
+                            <th>اسم الملف</th>
+                            <th>#الملفات</th>
+                            <th>#الصفحات</th>
+                            <th>السعر</th>
+                            <th>عدد النسخ</th>    
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <!-- History items will be added here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Element References
+            const fileUploadInput = document.getElementById('fileUpload');
+            const processButton = document.getElementById('processAndCreateMasterZipButton');
+            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+            const previewCard = document.getElementById('previewCard');    
+            const mainLoadingIndicator = document.getElementById('loadingIndicator');
+            const messagesDiv = document.getElementById('messages');
+            const clipboardStatusDisplay = document.getElementById('clipboardStatusDisplay');
+            const historyTableBody = document.getElementById('historyTableBody');    
+            const downloadAllHistoryButton = document.getElementById('downloadAllHistoryButton');
+            const clearAllHistoryButton = document.getElementById('clearAllHistoryButton');
+            const historyLoadingIndicator = document.getElementById('historyLoadingIndicator');
+            const fileDropAreaContainer = document.getElementById('fileDropAreaContainer'); 
+
+            // Global Variables
+            let filesToProcessGlobally = [];
+            let lastReadReferenceNumber = "";    
+
+            // IndexedDB Configuration
+            const DB_NAME = "OperationHistoryDB_v3";    
+            const DB_VERSION = 1;    
+            const STORE_NAME = "generatedZips";
+            let db;
+
+            // Initialize IndexedDB
+            function initDB() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(DB_NAME, DB_VERSION);
+                    request.onupgradeneeded = (event) => {
+                        const dbInstance = event.target.result;
+                        if (!dbInstance.objectStoreNames.contains(STORE_NAME)) {
+                            dbInstance.createObjectStore(STORE_NAME, { keyPath: "id", autoIncrement: true });
+                        }
+                    };
+                    request.onsuccess = (event) => {
+                        db = event.target.result;
+                        resolve(db);
+                        renderHistoryList(); 
+                    };
+                    request.onerror = (event) => {
+                        displayMessage("فشل تهيئة قاعدة بيانات السجل.", "danger");
+                        console.error("IndexedDB error:", event.target.errorCode);
+                        reject(event.target.errorCode);
+                    };
+                });
+            }
+            
+            initDB().catch(err => console.error("Failed to initialize DB on load:", err));
+
+            // Event Listeners
+            fileUploadInput.addEventListener('change', handleFileSelection);
+            processButton.addEventListener('click', processAndGenerateMasterZip);
+            downloadAllHistoryButton.addEventListener('click', handleDownloadAllAndClearHistory);    
+            clearAllHistoryButton.addEventListener('click', handleClearAllHistoryManual);    
+            
+            // Set initial state of the process button to disabled
+            processButton.disabled = true; 
+
+            // Drag and Drop Event Handlers
+            if (fileDropAreaContainer) {
+                fileDropAreaContainer.addEventListener('click', (e) => {
+                    if (e.target.id !== 'fileUpload' && e.target.tagName !== 'INPUT') {
+                         fileUploadInput.click();
+                    }
+                });
+
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    fileDropAreaContainer.addEventListener(eventName, preventDefaults, false);
+                    document.body.addEventListener(eventName, preventDefaults, false); 
+                });
+
+                function preventDefaults(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    fileDropAreaContainer.addEventListener(eventName, () => {
+                        fileDropAreaContainer.classList.add('dragover');
+                    }, false);
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    fileDropAreaContainer.addEventListener(eventName, () => {
+                        fileDropAreaContainer.classList.remove('dragover');
+                    }, false);
+                });
+
+                fileDropAreaContainer.addEventListener('drop', handleDrop, false);
+
+                function handleDrop(e) {
+                    const dt = e.dataTransfer;
+                    const files = dt.files;
+                    if (files.length) {
+                        fileUploadInput.files = files; 
+                        // Manually call handleFileSelection to ensure UI updates and button state.
+                        handleFileSelection({ target: fileUploadInput }); 
+                    }
+                }
+            }
+
+            // --- Utility Functions ---
+            function displayMessage(message, type = 'info') {
+                const messageElement = document.createElement('div');
+                messageElement.className = `alert alert-${type}`;
+                messageElement.textContent = message;
+                
+                if (type !== 'danger' && type !== 'warning') {
+                    const existingMessages = messagesDiv.querySelectorAll(`.alert-${type}`);
+                    existingMessages.forEach(msg => msg.remove());
+                }
+
+                if (messagesDiv.firstChild) {
+                    messagesDiv.insertBefore(messageElement, messagesDiv.firstChild);
+                } else {
+                    messagesDiv.appendChild(messageElement);
+                }
+                messagesDiv.scrollTop = 0;
+            }
+            function clearAllMessages() {    
+                 messagesDiv.innerHTML = '';    
+                 const fileList = messagesDiv.querySelector('.file-list-container');
+                 if(fileList) fileList.remove();
+            }
+
+            function isImageFile(fileName) {
+                const acceptedExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'];
+                return acceptedExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
+            }
+            function isPdfFile(fileName, fileType) {
+                return fileType === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');
+            }
+
+            // Handles file selection from both input click and drag-and-drop
+            async function handleFileSelection(event) {
+                filesToProcessGlobally = Array.from(event.target.files); 
+                imagePreviewContainer.innerHTML = '';
+                previewCard.style.display = 'none';    
+                clearAllMessages();    
+
+                const existingFileList = messagesDiv.querySelector('.file-list-container');
+                if (existingFileList) existingFileList.remove();
+
+                if (filesToProcessGlobally.length === 0) {
+                    displayMessage("لم يتم اختيار أي ملفات.", "warning");
+                    processButton.disabled = true; // Disable button if no files
+                    return;
+                }
+                
+                processButton.disabled = false; // Enable button if files are selected
+                displayMessage(`تم اختيار ${filesToProcessGlobally.length} ملف/ملفات. انسخ الرقم المرجعي ثم اضغط على زر المعالجة.`, "info");
+
+                const fileListContainer = document.createElement('div');
+                fileListContainer.className = 'file-list-container';
+                const listTitle = document.createElement('strong');
+                listTitle.textContent = 'الملفات المختارة:';
+                fileListContainer.appendChild(listTitle);
+                const ul = document.createElement('ul');
+                filesToProcessGlobally.forEach(file => {
+                    const li = document.createElement('li');
+                    li.textContent = `${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+                    ul.appendChild(li);
+                });
+                fileListContainer.appendChild(ul);
+                messagesDiv.appendChild(fileListContainer);    
+            }
+            
+            // --- IndexedDB History Functions ---
+            async function saveOperationToHistory(opData) {    
+                if (!db) return Promise.reject("DB not available");
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_NAME], "readwrite");
+                    const store = transaction.objectStore(STORE_NAME);
+                    const operationRecord = {
+                        referenceNumber: opData.referenceNumber,
+                        timestamp: new Date().toISOString(),
+                        zipName: opData.zipName,
+                        zipBlob: opData.zipBlob,
+                        totalFiles: opData.totalFiles,
+                        totalPages: opData.totalPages,
+                        calculatedPrice: opData.calculatedPrice
+                    };
+                    const request = store.add(operationRecord);
+                    request.onsuccess = () => { resolve(); renderHistoryList(); };
+                    request.onerror = (event) => { 
+                        console.error("Error saving to history:", event.target.error);
+                        displayMessage("فشل حفظ العملية في السجل.", "danger");
+                        reject(event.target.error); 
+                    };
+                });
+            }
+
+            async function deleteOperationFromHistory(id) {
+                if (!db) { displayMessage("قاعدة البيانات غير متاحة.", "danger"); return; }
+                // Replace window.confirm with a custom modal or remove confirmation for now
+                // if (!confirm(`هل أنت متأكد أنك تريد حذف هذه العملية من السجل؟`)) return; 
+                // For now, proceeding without explicit confirm to avoid issues in iframe
+                console.log(`Attempting to delete history item with ID: ${id}. Add custom confirmation if needed.`);
+
+
+                const transaction = db.transaction([STORE_NAME], "readwrite");
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.delete(id);
+                request.onsuccess = () => {
+                    displayMessage("تم حذف العملية من السجل بنجاح.", "success");
+                    renderHistoryList();
+                };
+                request.onerror = (event) => {
+                    displayMessage("فشل حذف العملية من السجل.", "danger");
+                    console.error("Error deleting history item:", event.target.error);
+                };
+            }
+            
+            async function handleClearAllHistoryManual() {    
+                if (!db) { displayMessage("قاعدة البيانات غير متاحة.", "danger"); return; }
+                // Replace window.confirm
+                // if (!confirm("هل أنت متأكد أنك تريد مسح كل سجل العمليات؟ لا يمكن التراجع عن هذا الإجراء.")) return;
+                console.log("Attempting to clear all history. Add custom confirmation if needed.");
+                try {
+                    await clearHistoryStore();    
+                } catch (error) {
+                    // Error message is displayed within clearHistoryStore
+                }
+            }
+
+            async function clearHistoryStore() {
+                 if (!db) return Promise.reject("DB not available for clearing");
+                 return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_NAME], "readwrite");
+                    const store = transaction.objectStore(STORE_NAME);
+                    const request = store.clear();    
+                    request.onsuccess = () => {
+                        displayMessage("تم مسح كل سجل العمليات بنجاح.", "success");
+                        renderHistoryList();
+                        resolve();
+                    };
+                    request.onerror = (event) => {
+                        displayMessage("فشل مسح سجل العمليات.", "danger");
+                        console.error("Error clearing history:", event.target.error);
+                        reject(event.target.error);
+                    };
+                });
+            }
+
+            async function renderHistoryList() {
+                if (!db) {
+                    historyTableBody.innerHTML = '<tr><td colspan="8">تعذر تحميل سجل العمليات (قاعدة البيانات غير متاحة).</td></tr>';
+                    return;
+                }
+                historyLoadingIndicator.style.display = 'block';
+                historyTableBody.innerHTML = '';    
+
+                const transaction = db.transaction([STORE_NAME], "readonly");
+                const store = transaction.objectStore(STORE_NAME);
+                const getAllRequest = store.getAll();    
+
+                getAllRequest.onsuccess = (event) => {
+                    const records = event.target.result.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));    
+                    if (records.length === 0) {
+                        historyTableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">لا توجد عمليات سابقة محفوظة.</td></tr>';
+                    } else {
+                        records.forEach(record => {
+                            const tr = historyTableBody.insertRow();
+                            
+                            tr.insertCell().textContent = record.referenceNumber || '-';
+                            tr.cells[0].setAttribute('data-label', 'رقم مرجعي');
+
+                            tr.insertCell().textContent = new Date(record.timestamp).toLocaleString('ar-EG');
+                             tr.cells[1].setAttribute('data-label', 'التاريخ');
+                            
+                            tr.insertCell().textContent = record.zipName || '-';
+                            tr.cells[2].setAttribute('data-label', 'اسم الملف');
+
+                            tr.insertCell().textContent = record.totalFiles !== undefined ? record.totalFiles : '-';
+                            tr.cells[3].setAttribute('data-label', '#الملفات');
+                            
+                            tr.insertCell().textContent = record.totalPages !== undefined ? record.totalPages : '-';
+                            tr.cells[4].setAttribute('data-label', '#الصفحات');
+
+                            const priceCell = tr.insertCell();
+                            priceCell.textContent = record.calculatedPrice !== undefined ? record.calculatedPrice : '-';
+                            priceCell.style.color = 'green';    
+                            priceCell.style.fontWeight = 'bold';
+                            priceCell.setAttribute('data-label', 'السعر');
+                            
+                            const copiesCell = tr.insertCell();
+                            const copiesInput = document.createElement('input');
+                            copiesInput.type = 'number';
+                            copiesInput.min = '1';
+                            copiesInput.value = '1';
+                            copiesInput.classList.add('small'); 
+                            copiesInput.style.maxWidth = '60px'; 
+                            copiesInput.id = `copiesInput_${record.id}`;    
+                            copiesCell.appendChild(copiesInput);
+                            copiesCell.setAttribute('data-label', 'عدد النسخ');
+                            
+                            const actionsCell = tr.insertCell();
+                            actionsCell.classList.add('history-item-actions');
+                            actionsCell.setAttribute('data-label', 'إجراءات');
+
+                            const reDownloadButton = document.createElement('button');
+                            reDownloadButton.textContent = "إعادة تحميل";
+                            reDownloadButton.classList.add('small', 'secondary');
+                            reDownloadButton.onclick = async () => {    
+                                const numCopiesInput = document.getElementById(`copiesInput_${record.id}`);
+                                const numCopies = numCopiesInput ? (parseInt(numCopiesInput.value, 10) || 1) : 1;
+
+                                if (numCopies < 1) {
+                                    displayMessage("عدد النسخ يجب أن يكون 1 أو أكثر.", "warning");
+                                    return;
+                                }
+
+                                if (record.zipBlob) {
+                                    displayMessage(`جاري تجهيز ${numCopies} نسخة من ملف "${record.zipName}" للتحميل...`, 'info');
+                                    if (numCopies === 1) {
+                                        saveAs(record.zipBlob, record.zipName);
+                                    } else {
+                                        const multiCopyZip = new JSZip();
+                                        const nameParts = record.zipName.match(/(.+?)(\.[^.]*$|$)/);
+                                        const baseName = nameParts[1];
+                                        const extension = nameParts[2] || '';
+                                        for (let i = 1; i <= numCopies; i++) {
+                                            multiCopyZip.file(`${baseName}_نسخة_${i}${extension}`, record.zipBlob);
+                                        }
+                                        try {
+                                            const multiBlob = await multiCopyZip.generateAsync({type: "blob"});
+                                            saveAs(multiBlob, `${baseName}_${numCopies}_نسخ.zip`);
+                                        } catch (zipError) {
+                                            displayMessage("فشل في إنشاء ملف ZIP للنسخ المتعددة.", "danger");
+                                            console.error("Error creating multi-copy ZIP:", zipError);
+                                        }
+                                    }
+                                } else {
+                                    displayMessage("بيانات الملف غير متاحة للتحميل.", "warning");
+                                }
+                            };
+                            actionsCell.appendChild(reDownloadButton);
+
+                            const deleteButton = document.createElement('button');
+                            deleteButton.textContent = "حذف";
+                            deleteButton.classList.add('small', 'danger');
+                            deleteButton.onclick = () => deleteOperationFromHistory(record.id);
+                            actionsCell.appendChild(deleteButton);
+                        });
+                    }
+                    historyLoadingIndicator.style.display = 'none';
+                };
+                getAllRequest.onerror = (event) => {
+                    historyTableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;">حدث خطأ أثناء تحميل سجل العمليات.</td></tr>';
+                    historyLoadingIndicator.style.display = 'none';
+                    console.error("Error fetching history:", event.target.error);
+                };
+            }
+
+            // --- File Processing Functions ---
+            async function getCroppedImageDetails(fileObject, fileName) {
+                return new Promise((resolve, reject) => {
+                    if (!(fileObject instanceof Blob)) { reject(new Error(`Invalid file object for ${fileName}.`)); return; }
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            try {
+                                const croppedCanvas = cropBlackBorders(img);
+                                const dataUrl = croppedCanvas.toDataURL(fileObject.type || 'image/png');
+                                resolve({ dataUrl, width: croppedCanvas.width, height: croppedCanvas.height, type: (fileObject.type ? fileObject.type.split('/')[1] : 'png').toLowerCase(), originalName: fileName });
+                            } catch (cropError) { 
+                                console.error(`Error cropping ${fileName}:`, cropError);
+                                reject(new Error(`Error cropping: ${fileName}. ${cropError.message}`)); 
+                            }
+                        };
+                        img.onerror = () => {
+                            console.error(`Cannot load image: ${fileName}.`);
+                            reject(new Error(`Cannot load image: ${fileName}.`));
+                        }
+                        img.src = e.target.result;
+                    };
+                    reader.onerror = () => {
+                        console.error(`Error reading file: ${fileName}.`);
+                        reject(new Error(`Error reading file: ${fileName}.`));
+                    }
+                    reader.readAsDataURL(fileObject);
+                });
+            }
+            
+            async function getUploadedPdfPageCount(fileObject) {
+                return new Promise((resolve, reject) => {
+                     if (!fileObject || typeof fileObject.arrayBuffer !== 'function') { 
+                        console.error("Invalid PDF file object for page count.");
+                        reject(new Error("Invalid PDF file.")); return; 
+                    }
+                    const reader = new FileReader();
+                    reader.onload = async (event) => {
+                        try {
+                            const arrayBuffer = event.target.result;
+                            const pdfDocument = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                            resolve(pdfDocument.numPages);
+                        } catch (error) { 
+                            console.error(`Failed to parse PDF ${fileObject.name}:`, error);
+                            reject(new Error(`Failed to parse PDF: ${error.message}`)); 
+                        }
+                    };
+                    reader.onerror = () => {
+                        console.error(`Error reading PDF file ${fileObject.name} for page count.`);
+                        reject(new Error("Error reading PDF file."));
+                    }
+                    reader.readAsArrayBuffer(fileObject);
+                });
+            }
+
+            async function createMainSummaryPdf(referenceNumber, totalCountedPages, calculatedPrice) {    
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ unit: 'pt', format: 'a4', compress: true });
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const rightMargin = 40;    
+                const bottomMargin = 50;    
+                let yPos = pageHeight - bottomMargin;    
+                const lineSpacing = 18;    
+                const verySmallFontSize = 10;    
+                const referenceFontSize = 16;    
+
+                const calculatedText = String(calculatedPrice);    
+                pdf.setFont("helvetica", "bold"); // Consider using a font that supports Arabic if available and needed for these numbers
+                pdf.setFontSize(verySmallFontSize);    
+                pdf.setTextColor(0, 0, 139);    
+                const calculatedTextWidth = pdf.getStringUnitWidth(calculatedText) * pdf.getFontSize() / pdf.internal.scaleFactor;
+                pdf.text(calculatedText, pageWidth - rightMargin - calculatedTextWidth, yPos, { align: 'right' });    
+
+                yPos -= lineSpacing;
+
+                const totalPagesText = String(totalCountedPages);    
+                const totalPagesTextActualWidth = pdf.getStringUnitWidth(totalPagesText) * pdf.getFontSize() / pdf.internal.scaleFactor;
+                pdf.text(totalPagesText, pageWidth - rightMargin - totalPagesTextActualWidth, yPos, { align: 'right' });    
+                
+                yPos -= (lineSpacing * 2);    
+                const refNumberText = String(referenceNumber || "---");    
+                pdf.setFont("helvetica", "bold");    
+                pdf.setFontSize(referenceFontSize);
+                const refNumberTextWidth = pdf.getStringUnitWidth(refNumberText) * pdf.getFontSize() / pdf.internal.scaleFactor;    
+                pdf.setTextColor(0, 0, 0);    
+                pdf.text(refNumberText, (pageWidth - refNumberTextWidth) / 2, yPos);    
+                
+                return pdf.output('blob');
+            }
+
+            async function processAndGenerateMasterZip() {
+                if (filesToProcessGlobally.length === 0) {
+                    displayMessage("الرجاء اختيار الملفات أولاً.", "warning");
+                    return;
+                }
+
+                let rawReferenceNumber = "";
+                try {
+                    if (!navigator.clipboard || !navigator.clipboard.readText) {
+                        // Replace prompt with a custom modal if possible, or guide user
+                        rawReferenceNumber = window.prompt("القراءة التلقائية للحافظة غير مدعومة أو مرفوضة. يرجى إدخال الرقم المرجعي يدويًا:", "");
+                        if (rawReferenceNumber === null) { // User cancelled prompt
+                             displayMessage("تم إلغاء إدخال الرقم المرجعي. تم إلغاء العملية.", "danger"); return;
+                        } else if (!rawReferenceNumber.trim()) {    
+                             displayMessage("لم يتم إدخال رقم مرجعي. تم إلغاء العملية.", "danger"); return;
+                        }
+                         displayMessage(`تم استخدام الرقم المدخل يدويًا: ${rawReferenceNumber}`, "info");
+                    } else {
+                        const textFromClipboard = await navigator.clipboard.readText();
+                        if (textFromClipboard && textFromClipboard.trim() !== "") {
+                            rawReferenceNumber = textFromClipboard.trim();
+                        } else {
+                            // Replace prompt
+                            rawReferenceNumber = window.prompt("الحافظة فارغة. يرجى إدخال الرقم المرجعي يدويًا:", "");
+                             if (rawReferenceNumber === null) { 
+                                 displayMessage("تم إلغاء إدخال الرقم المرجعي. تم إلغاء العملية.", "danger"); return;
+                            } else if (!rawReferenceNumber.trim()) {    
+                                 displayMessage("لم يتم إدخال رقم مرجعي. تم إلغاء العملية.", "danger"); return;
+                            }
+                             displayMessage(`تم استخدام الرقم المدخل يدويًا: ${rawReferenceNumber}`, "info");
+                        }
+                    }
+                } catch (err) {
+                    console.error("Clipboard read error or prompt:", err);
+                    displayMessage("فشل في قراءة الحافظة. تأكد من منح الإذن. سيتم طلب الرقم يدويًا.", "warning");
+                    // Replace prompt
+                    rawReferenceNumber = window.prompt("فشل في قراءة الحافظة تلقائيًا. يرجى إدخال الرقم المرجعي يدويًا:", "");
+                     if (rawReferenceNumber === null) {
+                         displayMessage("تم إلغاء إدخال الرقم المرجعي. تم إلغاء العملية.", "danger"); return;
+                    } else if (!rawReferenceNumber.trim()) {
+                        displayMessage("لم يتم إدخال رقم مرجعي. تم إلغاء العملية.", "danger"); return;
+                    }
+                    displayMessage(`تم استخدام الرقم المدخل يدويًا: ${rawReferenceNumber}`, "info");
+                }
+
+                lastReadReferenceNumber = rawReferenceNumber.replace(/\D/g, '');
+
+                if (!lastReadReferenceNumber) {
+                    displayMessage("لم يتم الحصول على رقم مرجعي صالح (أرقام فقط). لا يمكن المتابعة.", "danger");
+                    clipboardStatusDisplay.textContent = `النص الأصلي: "${rawReferenceNumber}" - لم يتم العثور على أرقام.`;
+                    return;
+                }
+                clipboardStatusDisplay.textContent = `الرقم المرجعي المستخدم: ${lastReadReferenceNumber}`;
+                
+                mainLoadingIndicator.style.display = 'block';
+                processButton.disabled = true; // Disable during processing
+                imagePreviewContainer.innerHTML = '';
+                if(filesToProcessGlobally.some(f => isImageFile(f.name) || (f.type === "application/zip" || f.name.toLowerCase().endsWith(".zip")))) {    
+                    previewCard.style.display = 'block';
+                } else {
+                    previewCard.style.display = 'none';
+                }
+
+                const masterZip = new JSZip();
+                let overallTotalCountedPages = 0;    
+                let filesForMasterZipStructure = [];    
+                                                        
+                for (let i = 0; i < filesToProcessGlobally.length; i++) {
+                    const file = filesToProcessGlobally[i];
+                    const originalFileName = file.name;
+                    let baseName = originalFileName.substring(0, originalFileName.lastIndexOf('.')) || originalFileName;
+                    const fileOrderPrefix = String(i).padStart(3, '0');    
+                    
+                    if (file.type === "application/zip" || file.type === "application/x-zip-compressed" || originalFileName.toLowerCase().endsWith(".zip")) {
+                        displayMessage(`جاري معالجة ملف ZIP: ${originalFileName} (ملف ${i + 1} من ${filesToProcessGlobally.length})...`, "info");
+                        const zipReader = new JSZip();
+                        const imagePdfNameForThisZip = `${baseName}_صور.pdf`;
+
+                        try {
+                            const zip = await zipReader.loadAsync(file);
+                            let imagesForThisGroupPdf = [];
+                            let nonImageFilesInThisZipBlobs = [];
+                            let zipEntryPromises = [];
+                            let pagesFromPdfsInThisZipForThisGroup = 0;
+
+                            zip.forEach((relativePath, zipEntry) => {
+                                if (zipEntry.dir) return;
+                                const entryFileName = zipEntry.name;
+
+                                if (isImageFile(entryFileName)) {
+                                    zipEntryPromises.push(
+                                        zipEntry.async("blob").then(blob => {
+                                            const fileType = entryFileName.toLowerCase().split('.').pop();
+                                            let mimeType = 'image/png'; // Default MIME type
+                                            if (['jpg', 'jpeg'].includes(fileType)) mimeType = 'image/jpeg';
+                                            else if (fileType === 'gif') mimeType = 'image/gif';
+                                            else if (fileType === 'bmp') mimeType = 'image/bmp';
+                                            else if (fileType === 'webp') mimeType = 'image/webp';
+                                            
+                                            const typedBlob = new Blob([blob], {type: mimeType});
+                                            return getCroppedImageDetails(typedBlob, entryFileName);
+                                        }).then(details => {
+                                            imagesForThisGroupPdf.push(details);
+                                            const previewItem = createPreviewElement(details.dataUrl, details.originalName);
+                                            imagePreviewContainer.appendChild(previewItem);
+                                        }).catch(err => {
+                                            displayMessage(`تحذير معالجة صورة '${entryFileName}' من ZIP: ${err.message}`, 'warning');
+                                            console.warn(`Warning processing image '${entryFileName}' from ZIP:`, err);
+                                        })
+                                    );
+                                } else if (isPdfFile(entryFileName, "")) { // Check PDF by extension if type is missing
+                                     zipEntryPromises.push(
+                                        zipEntry.async("blob").then(async blob => {
+                                            const pdfFileObject = new File([blob], entryFileName, {type: "application/pdf"});
+                                            try {
+                                                const pageCount = await getUploadedPdfPageCount(pdfFileObject);
+                                                pagesFromPdfsInThisZipForThisGroup += pageCount;
+                                                nonImageFilesInThisZipBlobs.push({ name: `${baseName}_${entryFileName.replace(/[/\\]/g, '_')}`, data: blob, orderKey: `1_zipcontent_${fileOrderPrefix}_pdf_${entryFileName}` });
+                                            } catch (pdfPageCountError) {
+                                                displayMessage(`فشل عد صفحات PDF '${entryFileName}' من ZIP. سيُضمّن كما هو.`, "warning");
+                                                console.warn(`Failed to count pages for PDF '${entryFileName}' from ZIP:`, pdfPageCountError);
+                                                nonImageFilesInThisZipBlobs.push({ name: `${baseName}_${entryFileName.replace(/[/\\]/g, '_')}`, data: blob, orderKey: `1_zipcontent_${fileOrderPrefix}_pdf_${entryFileName}` });
+                                            }
+                                        }).catch(err => {
+                                             displayMessage(`خطأ في معالجة ملف PDF '${entryFileName}' من ZIP: ${err.message}`, 'danger');
+                                             console.error(`Error processing PDF '${entryFileName}' from ZIP:`, err);
+                                        })
+                                    );
+                                } else {
+                                    zipEntryPromises.push(
+                                        zipEntry.async("blob").then(blob => {
+                                            nonImageFilesInThisZipBlobs.push({ name: `${baseName}_${relativePath.replace(/[/\\]/g, '_')}`, data: blob, orderKey: `1_zipcontent_${fileOrderPrefix}_other_${relativePath}` });
+                                        }).catch(err => {
+                                            displayMessage(`خطأ في معالجة ملف '${relativePath}' من ZIP: ${err.message}`, 'danger');
+                                            console.error(`Error processing file '${relativePath}' from ZIP:`, err);
+                                        })
+                                    );
+                                }
+                            });
+
+                            await Promise.all(zipEntryPromises);
+                            
+                            overallTotalCountedPages += pagesFromPdfsInThisZipForThisGroup;
+
+                            if (imagesForThisGroupPdf.length > 0) {
+                                const imagePdfBlob = await createImageOnlyPdf(imagesForThisGroupPdf);
+                                filesForMasterZipStructure.push({ name: imagePdfNameForThisZip, data: imagePdfBlob, orderKey: `1_zipimages_${fileOrderPrefix}` });
+                                overallTotalCountedPages += imagesForThisGroupPdf.length; // Each image becomes a page
+                            }
+                            filesForMasterZipStructure.push(...nonImageFilesInThisZipBlobs);
+                            
+                        } catch (zipError) {
+                            displayMessage(`فشل في معالجة ملف ZIP: ${originalFileName}. ${zipError.message}`, 'danger');
+                            console.error(`Failed to process ZIP ${originalFileName}:`, zipError);
+                        }
+                    }
+                    else if (isImageFile(originalFileName)) {
+                        displayMessage(`جاري معالجة الصورة: ${originalFileName}...`, "info");
+                        const pdfNameForSingleImage = `${baseName}_صورة.pdf`;
+                        try {
+                            const imageDetail = await getCroppedImageDetails(file, originalFileName);
+                            const pdfBlob = await createImageOnlyPdf([imageDetail]);
+                            filesForMasterZipStructure.push({ name: pdfNameForSingleImage, data: pdfBlob, orderKey: `2_singleimage_${fileOrderPrefix}` });
+                            overallTotalCountedPages += 1; // Single image PDF is one page
+                            const previewItem = createPreviewElement(imageDetail.dataUrl, imageDetail.originalName);
+                            imagePreviewContainer.appendChild(previewItem);
+                        } catch (imgError) {
+                            displayMessage(`فشل في معالجة الصورة: ${originalFileName}. ${imgError.message}`, 'danger');
+                            console.error(`Failed to process image ${originalFileName}:`, imgError);
+                        }
+                    } else if (isPdfFile(originalFileName, file.type)) {
+                        displayMessage(`جاري عد صفحات PDF المرفوع: ${originalFileName}...`, "info");
+                        try {
+                            const pageCount = await getUploadedPdfPageCount(file);
+                            overallTotalCountedPages += pageCount;
+                            filesForMasterZipStructure.push({ name: originalFileName, data: file, orderKey: `3_uploadedpdf_${fileOrderPrefix}` });    
+                        } catch (pdfPageCountError) {
+                            displayMessage(`فشل عد صفحات PDF: ${originalFileName}. سيُضمّن كما هو.`, "warning");
+                            console.warn(`Failed to count pages for PDF ${originalFileName}, will include as is:`, pdfPageCountError);
+                            filesForMasterZipStructure.push({ name: originalFileName, data: file, orderKey: `3_uploadedpdf_${fileOrderPrefix}` });
+                        }
+                    } else {
+                        displayMessage(`تجاهل الملف (تنسيق غير مدعوم مباشرة للعد): ${originalFileName}`, "warning");
+                        console.warn(`Unsupported file type for direct counting, including as is: ${originalFileName}`);
+                        filesForMasterZipStructure.push({ name: originalFileName, data: file, orderKey: `4_otherdirect_${fileOrderPrefix}` });
+                    }
+                } // End of files loop
+                
+                let calculatedPrice = 0;
+                if (overallTotalCountedPages < 50 && overallTotalCountedPages > 0) {
+                    calculatedPrice = Math.ceil(overallTotalCountedPages / 5);
+                } else if (overallTotalCountedPages >= 50 && overallTotalCountedPages <= 89) {
+                    calculatedPrice = Math.ceil(overallTotalCountedPages / 6);
+                } else if (overallTotalCountedPages >= 90 && overallTotalCountedPages <= 99) {
+                    calculatedPrice = Math.ceil(overallTotalCountedPages / 7);
+                } else if (overallTotalCountedPages >= 100 && overallTotalCountedPages <= 200) {
+                    calculatedPrice = Math.ceil(overallTotalCountedPages / 8);
+                } else if (overallTotalCountedPages > 200) {
+                    calculatedPrice = Math.ceil(overallTotalCountedPages / 10);
+                }
+
+                const mainSummaryPdfBlob = await createMainSummaryPdf(lastReadReferenceNumber, overallTotalCountedPages, calculatedPrice);
+                masterZip.file("_00_التقرير_المرجعي_الشامل.pdf", mainSummaryPdfBlob);    
+
+                filesForMasterZipStructure.sort((a, b) => a.orderKey.localeCompare(b.orderKey));
+                filesForMasterZipStructure.forEach(fileEntry => {
+                    masterZip.file(fileEntry.name, fileEntry.data);
+                });
+
+                const filesInMasterZipCount = Object.keys(masterZip.files).length;
+                if (filesInMasterZipCount > 1 || (filesInMasterZipCount === 1 && !Object.keys(masterZip.files)[0].startsWith("_00_"))) {
+                    try {
+                        const finalZipName = lastReadReferenceNumber.replace(/[^a-z0-9_.\-]/gi, '_').substring(0, 50) || "مجموعة_ملفات";
+                        const masterZipBlob = await masterZip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: {level: 6} });
+                        
+                        const historyOpData = {
+                            referenceNumber: lastReadReferenceNumber,
+                            zipName: `${finalZipName}.zip`,
+                            zipBlob: masterZipBlob,
+                            totalFiles: filesToProcessGlobally.length,    
+                            totalPages: overallTotalCountedPages,
+                            calculatedPrice: calculatedPrice    
+                        };
+                        await saveOperationToHistory(historyOpData);
+
+                        saveAs(masterZipBlob, `${finalZipName}.zip`);
+                        displayMessage(`تم إنشاء الـ ZIP الرئيسي باسم "${finalZipName}.zip" بنجاح!`, "success");
+
+                    } catch (masterZipError) {
+                        displayMessage("فشل في إنشاء الـ ZIP الرئيسي أو حفظه.", "danger");
+                        console.error("Failed to create or save master ZIP:", masterZipError);
+                    }
+                } else {
+                     displayMessage("لم يتم إنشاء أو تضمين أي ملفات للمعالجة. لم يتم إنشاء ZIP رئيسي.", "warning");
+                     console.warn("No files were processed or included, master ZIP not created.");
+                }
+
+                mainLoadingIndicator.style.display = 'none';
+                // Reset UI elements and state
+                filesToProcessGlobally = [];
+                fileUploadInput.value = ""; // Clear the file input
+                processButton.disabled = true; // Disable button after processing
+                clipboardStatusDisplay.textContent = "يرجى نسخ الرقم المرجعي والضغط على زر المعالجة.";
+                lastReadReferenceNumber = "";
+                 if(imagePreviewContainer.children.length === 0) {    
+                     previewCard.style.display = 'none';
+                }
+                 // Clear the displayed file list
+                const existingFileList = messagesDiv.querySelector('.file-list-container');
+                if (existingFileList) existingFileList.remove();
+            }
+            
+            async function handleDownloadAllAndClearHistory() {    
+                if (!db) { displayMessage("قاعدة البيانات غير متاحة.", "danger"); return; }
+                historyLoadingIndicator.style.display = 'block';
+                displayMessage("جاري تجميع كل العمليات السابقة...", "info");
+                
+                const transaction = db.transaction([STORE_NAME], "readonly");
+                const store = transaction.objectStore(STORE_NAME);
+                const getAllRequest = store.getAll();
+
+                getAllRequest.onsuccess = async (event) => {
+                    const records = event.target.result;
+                    if (records.length === 0) {
+                        displayMessage("لا توجد عمليات سابقة لتحميلها.", "warning");
+                        historyLoadingIndicator.style.display = 'none';
+                        return;
+                    }
+
+                    const superMasterZip = new JSZip();
+                    let addedFileNames = {};    
+
+                    records.forEach(record => {
+                        const copiesInput = document.getElementById(`copiesInput_${record.id}`);
+                        let numCopies = copiesInput ? (parseInt(copiesInput.value, 10)) : 1;
+                        if (isNaN(numCopies) || numCopies < 1) numCopies = 1;
+
+                        const originalRecordZipName = record.zipName;
+                        const nameParts = originalRecordZipName.match(/(.+?)(\.[^.]*$|$)/);
+                        const baseOriginalName = nameParts[1];
+                        const extensionOriginal = nameParts[2] || '';
+
+                        for (let i = 1; i <= numCopies; i++) {
+                            let proposedName;
+                            if (numCopies === 1) { 
+                                proposedName = originalRecordZipName;
+                            } else { 
+                                proposedName = `${baseOriginalName}_نسخة_${i}${extensionOriginal}`;
+                            }
+
+                            let finalNameToAdd = proposedName;
+                            let collisionCounter = 1;
+                            while(addedFileNames[finalNameToAdd]) {
+                                const tempNameParts = proposedName.match(/(.+?)(\.[^.]*$|$)/);
+                                const tempBase = tempNameParts[1];
+                                const tempExt = tempNameParts[2] || '';
+                                finalNameToAdd = `${tempBase}_(${collisionCounter})${tempExt}`;
+                                collisionCounter++;
+                            }
+                            if (record.zipBlob) { // Ensure blob exists
+                                superMasterZip.file(finalNameToAdd, record.zipBlob);
+                                addedFileNames[finalNameToAdd] = true;
+                            } else {
+                                console.warn(`Skipping record ID ${record.id} as zipBlob is missing.`);
+                            }
+                        }
+                    });
+                    
+                    if (Object.keys(addedFileNames).length === 0) {
+                        displayMessage("لم يتم العثور على ملفات صالحة في السجل لتجميعها.", "warning");
+                        historyLoadingIndicator.style.display = 'none';
+                        return;
+                    }
+
+                    try {
+                        const superMasterZipBlob = await superMasterZip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
+                        const fileName = `${Object.keys(addedFileNames).length}_ملف_مجمع_من_السجل.zip`; 
+                        saveAs(superMasterZipBlob, fileName);
+                        displayMessage(`تم تجميع الملفات من السجل بنجاح وجاري تنزيلها باسم "${fileName}".`, "success");
+                        
+                        await clearHistoryStore();    
+                    } catch (error) {
+                        displayMessage("فشل في إنشاء ملف ZIP لجميع العمليات السابقة.", "danger");
+                        console.error("Error creating super master ZIP:", error);
+                    } finally {
+                        historyLoadingIndicator.style.display = 'none';
+                    }
+                };
+                getAllRequest.onerror = (event) => {
+                    displayMessage("فشل في قراءة سجل العمليات.", "danger");
+                    console.error("Error fetching all history for download:", event.target.error);
+                    historyLoadingIndicator.style.display = 'none';
+                };
+            }
+
+            function createPreviewElement(dataUrl, imageName) {
+                const itemDiv = document.createElement('div'); itemDiv.classList.add('processed-image-item');
+                const previewImg = new Image(); previewImg.src = dataUrl; previewImg.classList.add('processed-image');
+                previewImg.alt = `معاينة لـ ${imageName}`; previewImg.title = `انقر لتكبير ${imageName}`;
+                previewImg.addEventListener('click', () => openFullscreen(previewImg.src));
+                const nameLabel = document.createElement('div'); nameLabel.classList.add('image-name-label'); nameLabel.textContent = imageName;
+                itemDiv.appendChild(previewImg); itemDiv.appendChild(nameLabel); return itemDiv;
+            }
+
+            async function createImageOnlyPdf(imagesDetails) {
+                const { jsPDF } = window.jspdf; const pdf = new jsPDF({ unit: 'px', compress: true });
+                
+                // Remove the default first blank page if it exists and is truly empty
+                if (pdf.internal.pages.length === 1 && pdf.getNumberOfPages() === 1) {
+                    const firstPageContentArray = pdf.internal.pages[1]; // jsPDF uses 1-based indexing for pages array
+                    if (!firstPageContentArray || firstPageContentArray.length === 0 ||    
+                        (firstPageContentArray.length <= 2 && firstPageContentArray.join("").trim() === "") || // Check for minimal/empty content
+                        Object.keys(pdf.internal.pages[1]).length <= 2) { // Check for minimal properties
+                         pdf.deletePage(1);
+                    }
+                }
+
+                let imagesAddedCount = 0;
+                imagesDetails.forEach(imgData => {
+                    if (!imgData || imgData.width === 0 || imgData.height === 0) { 
+                        console.warn("Skipping invalid image data for PDF creation:", imgData ? imgData.originalName : "Unknown image");
+                        return; 
+                    }
+                    const orientation = imgData.width >= imgData.height ? 'l' : 'p'; // landscape or portrait
+                    
+                    // Add a new page or set current page dimensions
+                    if (imagesAddedCount === 0 && pdf.getNumberOfPages() === 0) { // First image, PDF is empty
+                        pdf.addPage([imgData.width, imgData.height], orientation);
+                    } else if (imagesAddedCount === 0 && pdf.getNumberOfPages() === 1) { // First image, but PDF had a (now deleted) blank page
+                        pdf.setPage(1);    
+                        pdf.internal.pageSize.width = imgData.width;
+                        pdf.internal.pageSize.height = imgData.height;
+                        pdf.internal.pageSize.orientation = orientation;
+                    } else {    // Subsequent images
+                        pdf.addPage([imgData.width, imgData.height], orientation);
+                    }
+
+                    imagesAddedCount++;
+                    const finalImageType = ['JPEG', 'PNG', 'WEBP'].includes(imgData.type.toUpperCase()) ? imgData.type.toUpperCase() : 'PNG'; // Default to PNG
+                    try { 
+                        pdf.addImage(imgData.dataUrl, finalImageType, 0, 0, imgData.width, imgData.height, undefined, 'FAST'); 
+                    } catch (addImageError) {    
+                        console.error(`Error adding image ${imgData.originalName} to PDF:`, addImageError);
+                        // Add a placeholder or error message on the PDF page
+                        const currentPageInfo = pdf.getPageInfo(pdf.internal.getNumberOfPages());
+                        pdf.setFillColor(255, 230, 230); // Light red background
+                        pdf.rect(0,0, currentPageInfo.pageContext.width, currentPageInfo.pageContext.height, 'F');
+                        pdf.setTextColor(200,0,0); // Dark red text
+                        pdf.setFontSize(10);
+                        pdf.text(`فشل تحميل الصورة: ${imgData.originalName}`, 10, 20, {maxWidth: currentPageInfo.pageContext.width - 20});
+                     }
+                });
+                if (imagesAddedCount === 0) { // If no valid images were added
+                    if (pdf.getNumberOfPages() === 0) { pdf.addPage(); } // Ensure there's at least one page
+                    const targetPage = pdf.getNumberOfPages() > 0 ? pdf.getNumberOfPages() : 1; 
+                    pdf.setPage(targetPage);
+                    pdf.text("لم يتم العثور على صور صالحة لهذا الملف.", 20, 20);
+                }
+                return pdf.output('blob');
+            }
+
+            function cropBlackBorders(img, threshold = 25, borderDetectionStep = 2) {
+                const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                canvas.width = img.width; canvas.height = img.height;
+                if (img.width === 0 || img.height === 0) return canvas; // Return empty canvas if image is empty
+                ctx.drawImage(img, 0, 0); let imageData;
+                try { imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); }    
+                catch (e) { 
+                    console.warn("Could not getImageData (possibly tainted canvas), returning original image on new canvas.", e);
+                    const oC = document.createElement('canvas'); oC.width = img.width; oC.height = img.height; 
+                    if (img.width > 0 && img.height > 0) oC.getContext('2d').drawImage(img, 0, 0); 
+                    return oC; 
+                }
+                const data = imageData.data; const width = canvas.width; const height = canvas.height;
+                let top = 0, bottom = height - 1, left = 0, right = width - 1; let foundNonBlack;
+
+                // Find top border
+                foundNonBlack = false; 
+                for (let y = 0; y < height; y += borderDetectionStep) { 
+                    for (let x = 0; x < width; x += borderDetectionStep) { 
+                        const i = (Math.min(y, height - 1) * width + Math.min(x, width - 1)) * 4; 
+                        if (data[i] > threshold || data[i + 1] > threshold || data[i + 2] > threshold) { 
+                            top = y; foundNonBlack = true; break; 
+                        } 
+                    } 
+                    if (foundNonBlack) break; 
+                } 
+                if (!foundNonBlack) top = height; // All black or empty
+
+                // Find bottom border
+                foundNonBlack = false; 
+                for (let y = height - 1; y >= top; y -= borderDetectionStep) { 
+                    for (let x = 0; x < width; x += borderDetectionStep) { 
+                        const i = (Math.max(0, y) * width + Math.min(x, width - 1)) * 4; 
+                        if (data[i] > threshold || data[i + 1] > threshold || data[i + 2] > threshold) { 
+                            bottom = y; foundNonBlack = true; break; 
+                        } 
+                    } 
+                    if (foundNonBlack) break; 
+                } 
+                if (!foundNonBlack && top === height) { /* All black, leave as is */ } 
+                else if (!foundNonBlack) { bottom = top -1; /* Should not happen if top found content */ }
+
+                // Find left border
+                foundNonBlack = false; 
+                for (let x = 0; x < width; x += borderDetectionStep) { 
+                    for (let y = top; y <= bottom; y += borderDetectionStep) { 
+                        const i = (Math.min(y, bottom) * width + Math.min(x, width - 1)) * 4; 
+                        if (data[i] > threshold || data[i + 1] > threshold || data[i + 2] > threshold) { 
+                            left = x; foundNonBlack = true; break; 
+                        } 
+                    } 
+                    if (foundNonBlack) break; 
+                } 
+                if (!foundNonBlack) left = width; // All black or empty in this strip
+
+                // Find right border
+                foundNonBlack = false; 
+                for (let x = width - 1; x >= left; x -= borderDetectionStep) { 
+                    for (let y = top; y <= bottom; y += borderDetectionStep) { 
+                        const i = (Math.min(y, bottom) * width + Math.max(0, x)) * 4; 
+                        if (data[i] > threshold || data[i + 1] > threshold || data[i + 2] > threshold) { 
+                            right = x; foundNonBlack = true; break; 
+                        } 
+                    } 
+                    if (foundNonBlack) break; 
+                } 
+                if (!foundNonBlack && left === width) { /* All black, leave as is */ } 
+                else if (!foundNonBlack) { right = left - 1; /* Should not happen */ }
+                
+                const padding = 1; // Add a small padding
+                top = Math.max(0, top - padding); 
+                bottom = Math.min(height - 1, bottom + padding); 
+                left = Math.max(0, left - padding); 
+                right = Math.min(width - 1, right + padding);
+                
+                let cropWidth = right - left + 1; 
+                let cropHeight = bottom - top + 1;
+
+                // If calculated crop dimensions are invalid (e.g., all black image), return original
+                if (cropWidth <= 0 || cropHeight <= 0 || left >= width || top >= height) { 
+                    console.warn("Cropping resulted in invalid dimensions for image, returning original.");
+                    const oC = document.createElement('canvas'); oC.width = img.width; oC.height = img.height; 
+                    if (img.width > 0 && img.height > 0) oC.getContext('2d').drawImage(img, 0, 0); 
+                    return oC; 
+                }
+                
+                const croppedCanvas = document.createElement('canvas'); 
+                croppedCanvas.width = cropWidth; 
+                croppedCanvas.height = cropHeight; 
+                croppedCanvas.getContext('2d').drawImage(img, left, top, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight); 
+                return croppedCanvas;
+            }
+
+            function openFullscreen(imgSrc) {
+                const existingFullscreen = document.querySelector('.fullscreen-image-overlay'); 
+                if (existingFullscreen) existingFullscreen.remove();
+                
+                const fullscreenDiv = document.createElement('div'); 
+                fullscreenDiv.classList.add('fullscreen-image-overlay');
+                const imgElement = document.createElement('img'); 
+                imgElement.src = imgSrc; 
+                imgElement.alt = "صورة مكبرة بملء الشاشة";
+                
+                fullscreenDiv.appendChild(imgElement); 
+                fullscreenDiv.addEventListener('click', () => fullscreenDiv.remove()); 
+                document.body.appendChild(fullscreenDiv);
+            }
+
+            // Remove window.confirm and window.prompt as they are not allowed in this environment
+            // For actions requiring confirmation (delete, clear history) or input (reference number),
+            // you would typically implement custom modal dialogs.
+            // For now, critical prompts are replaced with console logs or direct execution.
+            // Example: Replace `confirm()` with a direct action or a console log.
+            // Example: `prompt()` for reference number needs a custom UI solution.
+            // The current code uses `window.prompt` as a placeholder; this will likely fail in the iframe.
+            // A robust solution would involve creating an HTML modal for input.
+
+        });
+    </script>
+</body>
+</html>
